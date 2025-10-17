@@ -8,7 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Kreait\Firebase\Contract\Firestore;
+// use Kreait\Firebase\Contract\Firestore;
 use App\Models\User;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -23,14 +23,14 @@ class ImportAllFirestoreData implements ShouldQueue
 
     public $timeout = 600; // 10 minutes
     
-    protected Firestore $firestore;
+    protected FirestoreRestClient $firestore;
 
     /**
      * Create a new job instance.
      */
     public function __construct()
     {
-        $this->firestore = app(Firestore::class);
+        $this->firestore = new FirestoreRestClient();
     }
 
     /**
@@ -57,6 +57,13 @@ class ImportAllFirestoreData implements ShouldQueue
                 return;
             }
             
+            echo "Importing service categories...\n";
+            if (!env('FIREBASE_IMPORT_ONLY_USERS', false)) {
+                $this->importServiceCategories();
+            } else {
+                echo "  Skipped service categories import (FIREBASE_IMPORT_ONLY_USERS enabled)\n";
+            }
+
             echo "Importing services...\n";
             // Skip if only importing users during diagnostics
             if (!env('FIREBASE_IMPORT_ONLY_USERS', false)) {
@@ -79,6 +86,13 @@ class ImportAllFirestoreData implements ShouldQueue
                 echo "  Skipped orders import (FIREBASE_IMPORT_ONLY_USERS enabled)\n";
             }
             
+            echo "Importing banners...\n";
+            if (!env('FIREBASE_IMPORT_ONLY_USERS', false)) {
+                $this->importBanners();
+            } else {
+                echo "  Skipped banners import (FIREBASE_IMPORT_ONLY_USERS enabled)\n";
+            }
+
             echo "Importing ratings...\n";
             if (!env('FIREBASE_IMPORT_ONLY_USERS', false)) {
                 $this->importRatings();
@@ -100,40 +114,42 @@ class ImportAllFirestoreData implements ShouldQueue
     protected function importServiceCategories()
     {
         try {
-            echo "Getting Firestore database...\n";
-            $collection = $this->firestore->database()->collection('serviceCategories');
-            
-            echo "Fetching documents...\n";
-            $documents = $collection->documents();
-            $count = 0;
+            echo "Fetching serviceCategories from Firestore (REST)...\n";
+            $client = new FirestoreRestClient();
+            $pageToken = null; $count = 0; $processed = 0;
 
-            echo "Processing documents...\n";
-            foreach ($documents as $document) {
-                if ($document->exists()) {
-                    $data = $document->data();
-                    
+            do {
+                [$documents, $nextPageToken] = $client->listDocuments('serviceCategories', 100, $pageToken);
+                $batch = 0;
+                foreach ($documents as $doc) {
+                    $processed++;
+                    $docId = basename($doc['name'] ?? '') ?: null;
+                    if (!$docId) continue;
+                    $data = FirestoreRestClient::decodeDocument($doc);
+
                     ServiceCategory::updateOrCreate(
-                        ['firebase_id' => $document->id()],
+                        ['firebase_id' => $docId],
                         [
                             'name' => $data['name'] ?? 'Unnamed',
                             'slug' => $data['slug'] ?? Str::slug($data['name'] ?? 'unnamed'),
                             'description' => $data['description'] ?? null,
-                            'icon_url' => $data['iconUrl'] ?? null,
+                            'icon_url' => $data['iconUrl'] ?? $data['iconURL'] ?? null,
                             'color_code' => $data['colorCode'] ?? '#000000',
                             'sort_order' => $data['sortOrder'] ?? 0,
                             'is_active' => $data['isActive'] ?? true,
                             'last_synced_at' => now(),
                         ]
                     );
-                    $count++;
+                    $count++; $batch++;
                 }
-            }
+                echo "  Processed serviceCategories batch: {$batch} (total {$count})\n";
+                $pageToken = $nextPageToken;
+            } while ($pageToken);
 
-            Log::info("Imported {$count} service categories from Firestore");
-            echo "Imported {$count} service categories from Firestore\n";
+            Log::info("Imported {$count} service categories from Firestore (processed {$processed})");
+            echo "✓ Imported {$count} service categories from Firestore (processed {$processed})\n";
         } catch (\Exception $e) {
             echo "ERROR in importServiceCategories: " . $e->getMessage() . "\n";
-            echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n";
             throw $e;
         }
     }
@@ -503,38 +519,51 @@ class ImportAllFirestoreData implements ShouldQueue
 
     protected function importBanners()
     {
-        $collection = $this->firestore->database()->collection('banners');
-        $documents = $collection->documents();
-        $count = 0;
+        try {
+            echo "Fetching banners from Firestore (REST)...\n";
+            $client = new FirestoreRestClient();
+            $pageToken = null; $count = 0; $processed = 0;
 
-        foreach ($documents as $document) {
-            if ($document->exists()) {
-                $data = $document->data();
-                
-                Banner::updateOrCreate(
-                    ['firebase_id' => $document->id()],
-                    [
-                        'title' => $data['title'] ?? 'Unnamed Banner',
-                        'description' => $data['description'] ?? null,
-                        'image_url' => $data['imageUrl'] ?? null,
-                        'link_type' => $data['linkType'] ?? null,
-                        'link_value' => $data['linkValue'] ?? null,
-                        'button_text' => $data['buttonText'] ?? null,
-                        'sort_order' => $data['sortOrder'] ?? 0,
-                        'is_active' => $data['isActive'] ?? true,
-                        'start_date' => isset($data['startDate']) 
-                            ? \Carbon\Carbon::parse($data['startDate']) 
-                            : null,
-                        'end_date' => isset($data['endDate']) 
-                            ? \Carbon\Carbon::parse($data['endDate']) 
-                            : null,
-                        'last_synced_at' => now(),
-                    ]
-                );
-                $count++;
-            }
+            do {
+                [$documents, $nextPageToken] = $client->listDocuments('banners', 100, $pageToken);
+                $batch = 0;
+                foreach ($documents as $doc) {
+                    $processed++;
+                    $docId = basename($doc['name'] ?? '') ?: null;
+                    if (!$docId) continue;
+                    $data = FirestoreRestClient::decodeDocument($doc);
+
+                    Banner::updateOrCreate(
+                        ['firebase_id' => $docId],
+                        [
+                            'title' => $data['title'] ?? 'Unnamed Banner',
+                            'description' => $data['description'] ?? null,
+                            'image_url' => $data['imageUrl'] ?? $data['imageURL'] ?? null,
+                            'link_type' => $data['linkType'] ?? null,
+                            'link_value' => $data['linkValue'] ?? null,
+                            'button_text' => $data['buttonText'] ?? null,
+                            'sort_order' => $data['sortOrder'] ?? 0,
+                            'is_active' => $data['isActive'] ?? true,
+                            'start_date' => isset($data['startDate']) 
+                                ? \Carbon\Carbon::parse($data['startDate']) 
+                                : null,
+                            'end_date' => isset($data['endDate']) 
+                                ? \Carbon\Carbon::parse($data['endDate']) 
+                                : null,
+                            'last_synced_at' => now(),
+                        ]
+                    );
+                    $count++; $batch++;
+                }
+                echo "  Processed banners batch: {$batch} (total {$count})\n";
+                $pageToken = $nextPageToken;
+            } while ($pageToken);
+
+            Log::info("Imported {$count} banners from Firestore (processed {$processed})");
+            echo "✓ Imported {$count} banners from Firestore (processed {$processed})\n";
+        } catch (\Exception $e) {
+            echo "ERROR in importBanners: " . $e->getMessage() . "\n";
+            echo "  (Continuing despite banners error)\n";
         }
-
-        Log::info("Imported {$count} banners from Firestore");
     }
 }

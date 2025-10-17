@@ -9,8 +9,6 @@
         "php": "^8.2",
         "doctrine/dbal": "^4.3",
         "filament/filament": "4.0",
-        "google/cloud-firestore": "*",
-        "kreait/laravel-firebase": "^6.1",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
