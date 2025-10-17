@@ -22,16 +22,9 @@ class ImportAllFirestoreData implements ShouldQueue
     use Queueable, InteractsWithQueue, SerializesModels;
 
     public $timeout = 600; // 10 minutes
-    
-    protected FirestoreRestClient $firestore;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
-    {
-        $this->firestore = new FirestoreRestClient();
-    }
+    // Note: Avoid heavy initialization in constructor to prevent issues during package discovery
+    public function __construct() {}
 
     /**
      * Execute the job.
@@ -48,6 +41,7 @@ class ImportAllFirestoreData implements ShouldQueue
         echo "Starting Firestore import...\n";
 
         try {
+            // Lazy init of REST client will happen inside import methods
             echo "Importing users...\n";
             $this->importUsers();
             

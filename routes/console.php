@@ -10,35 +10,47 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Firebase Sync Scheduled Jobs
+// Firebase Sync Scheduled Jobs (use closures to avoid instantiating jobs during bootstrap)
 // Full import from Firestore once daily at 2:00 AM
-Schedule::job(new ImportAllFirestoreData)
+Schedule::call(function () {
+        dispatch(new ImportAllFirestoreData());
+})->name('import-all-firestore')
     ->dailyAt('02:00')
     ->onOneServer()
     ->withoutOverlapping();
 
-// Continuous sync for each collection every 5 minutes
-Schedule::job(new SyncFirestoreChanges('users'))
+// Continuous sync for each collection
+Schedule::call(function () {
+        dispatch(new SyncFirestoreChanges('users'));
+})->name('sync-firestore-users')
     ->everyFiveMinutes()
     ->onOneServer()
     ->withoutOverlapping();
 
-Schedule::job(new SyncFirestoreChanges('services'))
+Schedule::call(function () {
+        dispatch(new SyncFirestoreChanges('services'));
+})->name('sync-firestore-services')
     ->everyFiveMinutes()
     ->onOneServer()
     ->withoutOverlapping();
 
-Schedule::job(new SyncFirestoreChanges('serviceCategories'))
+Schedule::call(function () {
+        dispatch(new SyncFirestoreChanges('serviceCategories'));
+})->name('sync-firestore-service-categories')
     ->everyTenMinutes()
     ->onOneServer()
     ->withoutOverlapping();
 
-Schedule::job(new SyncFirestoreChanges('orders'))
+Schedule::call(function () {
+        dispatch(new SyncFirestoreChanges('orders'));
+})->name('sync-firestore-orders')
     ->everyFiveMinutes()
     ->onOneServer()
     ->withoutOverlapping();
 
-Schedule::job(new SyncFirestoreChanges('banners'))
+Schedule::call(function () {
+        dispatch(new SyncFirestoreChanges('banners'));
+})->name('sync-firestore-banners')
     ->everyTenMinutes()
     ->onOneServer()
     ->withoutOverlapping();

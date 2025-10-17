@@ -8,7 +8,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Kreait\Firebase\Contract\Firestore;
+// use Kreait\Firebase\Contract\Firestore;
+use App\Services\FirestoreRestClient;
 use App\Models\User;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -22,7 +23,6 @@ class SyncFirestoreChanges implements ShouldQueue
 
     public $timeout = 300; // 5 minutes
     
-    protected Firestore $firestore;
     protected string $collection;
 
     /**
@@ -30,7 +30,7 @@ class SyncFirestoreChanges implements ShouldQueue
      */
     public function __construct(string $collection)
     {
-        $this->firestore = app(Firestore::class);
+        // Avoid resolving Firestore client at construction time
         $this->collection = $collection;
     }
 
@@ -60,29 +60,33 @@ class SyncFirestoreChanges implements ShouldQueue
             // Query documents updated since last sync
             $lastTimestamp = $syncStatus->last_document_timestamp ?? now()->subYear();
             
-            $query = $this->firestore->database()
-                ->collection($this->collection)
-                ->where('updatedAt', '>', $lastTimestamp->toIso8601String());
-
-            $documents = $query->documents();
+            // Use REST client to fetch documents (no server-side filtering; do it in PHP)
+            $client = new FirestoreRestClient();
+            $pageToken = null;
             $count = 0;
             $latestTimestamp = $lastTimestamp;
 
-            foreach ($documents as $document) {
-                if ($document->exists()) {
-                    $data = $document->data();
-                    $this->syncDocument($this->collection, $document->id(), $data);
+            do {
+                [$documents, $nextPageToken] = $client->listDocuments($this->collection, 200, $pageToken);
+                foreach ($documents as $doc) {
+                    $docId = basename($doc['name'] ?? '') ?: null;
+                    if (!$docId) continue;
+                    $data = FirestoreRestClient::decodeDocument($doc);
+
+                    // Filter by updatedAt > lastTimestamp when present
+                    $updatedAt = isset($data['updatedAt']) ? \Carbon\Carbon::parse($data['updatedAt']) : null;
+                    if ($updatedAt && $updatedAt->lessThanOrEqualTo($lastTimestamp)) {
+                        continue;
+                    }
+
+                    $this->syncDocument($this->collection, $docId, $data);
                     $count++;
-                    
-                    // Track the latest timestamp
-                    if (isset($data['updatedAt'])) {
-                        $docTimestamp = \Carbon\Carbon::parse($data['updatedAt']);
-                        if ($docTimestamp->greaterThan($latestTimestamp)) {
-                            $latestTimestamp = $docTimestamp;
-                        }
+                    if ($updatedAt && $updatedAt->greaterThan($latestTimestamp)) {
+                        $latestTimestamp = $updatedAt;
                     }
                 }
-            }
+                $pageToken = $nextPageToken;
+            } while ($pageToken);
 
             $syncStatus->update([
                 'last_sync_at' => now(),

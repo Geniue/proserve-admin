@@ -7,27 +7,28 @@ use Google\Auth\Credentials\ServiceAccountCredentials;
 
 class FirestoreRestClient
 {
-    protected string $projectId;
+    protected ?string $projectId = null;
     protected string $database;
-    protected string $credentialsPath;
+    protected ?string $credentialsPath = null;
     protected HttpClient $http;
 
     public function __construct(?string $projectId = null, string $database = '(default)')
     {
-        $this->credentialsPath = (string) (config('firebase.projects.app.credentials')
+        $path = (string) (config('firebase.projects.app.credentials')
             ?? env('FIREBASE_CREDENTIALS')
             ?? env('GOOGLE_APPLICATION_CREDENTIALS')
         );
+        $this->credentialsPath = $path !== '' ? $path : null;
 
-        if (!is_file($this->credentialsPath)) {
-            throw new \RuntimeException('Firebase credentials file not found at: ' . $this->credentialsPath);
-        }
-
+        // Defer validation to when a request is actually made; avoid throwing during bootstrap
         if ($projectId) {
             $this->projectId = $projectId;
         } else {
-            $json = json_decode((string) file_get_contents($this->credentialsPath), true);
-            $this->projectId = $json['project_id'] ?? throw new \RuntimeException('project_id missing in credentials');
+            $this->projectId = env('FIREBASE_PROJECT_ID') ?: null;
+            if (!$this->projectId && $this->credentialsPath && is_file($this->credentialsPath)) {
+                $json = json_decode((string) file_get_contents($this->credentialsPath), true);
+                $this->projectId = $json['project_id'] ?? null;
+            }
         }
 
         $this->database = $database;
@@ -39,6 +40,9 @@ class FirestoreRestClient
 
     protected function getAccessToken(): string
     {
+        if (!$this->credentialsPath || !is_file($this->credentialsPath)) {
+            throw new \RuntimeException('Firebase credentials file not found at: ' . (string) ($this->credentialsPath ?? ''));
+        }
         $scopes = ['https://www.googleapis.com/auth/datastore'];
         $creds = new ServiceAccountCredentials($scopes, $this->credentialsPath);
         $token = $creds->fetchAuthToken();
@@ -50,6 +54,16 @@ class FirestoreRestClient
 
     public function listDocuments(string $collection, int $pageSize = 50, ?string $pageToken = null): array
     {
+        if (!$this->projectId) {
+            // Attempt final lazy resolution from credentials file
+            if ($this->credentialsPath && is_file($this->credentialsPath)) {
+                $json = json_decode((string) file_get_contents($this->credentialsPath), true);
+                $this->projectId = $json['project_id'] ?? null;
+            }
+        }
+        if (!$this->projectId) {
+            throw new \RuntimeException('Firebase project_id not configured. Set FIREBASE_PROJECT_ID or provide credentials with project_id.');
+        }
         $accessToken = $this->getAccessToken();
         $parent = sprintf('projects/%s/databases/%s/documents', $this->projectId, $this->database);
         $path = sprintf('%s/%s', $parent, $collection);
