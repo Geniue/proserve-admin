@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use Kreait\Firebase\Contract\Firestore;
+use App\Services\FirestoreRestClient;
 use App\Models\FirestoreSyncLog;
 use Illuminate\Support\Facades\Log;
 
@@ -53,21 +53,17 @@ trait SyncToFirestore
     abstract public function toFirestoreArray(): array;
 
     /**
-     * Push changes to Firestore
+     * Push changes to Firestore using REST client
      */
     public function pushToFirestore(string $action)
     {
         try {
-            $firestore = app(Firestore::class);
+            $client = app(FirestoreRestClient::class);
             $collection = $this->getFirestoreCollection();
             $documentId = $this->getFirestoreDocumentId();
 
             if ($action === 'delete') {
-                $firestore->database()
-                    ->collection($collection)
-                    ->document($documentId)
-                    ->delete();
-                    
+                $client->deleteDocument($collection, $documentId);
                 Log::info("Deleted from Firestore: {$collection}/{$documentId}");
             } else {
                 $data = array_merge($this->toFirestoreArray(), [
@@ -75,16 +71,12 @@ trait SyncToFirestore
                     'updatedBy' => auth()->id() ?? 'admin',
                 ]);
 
-                $firestore->database()
-                    ->collection($collection)
-                    ->document($documentId)
-                    ->set($data, ['merge' => true]);
-                    
+                $client->setDocument($collection, $documentId, $data, true);
                 Log::info("Synced to Firestore: {$collection}/{$documentId} - {$action}");
             }
 
             // Update last_synced_at timestamp
-            if (method_exists($this, 'update') && $action !== 'delete') {
+            if (method_exists($this, 'updateQuietly') && $action !== 'delete') {
                 $this->updateQuietly(['last_synced_at' => now()]);
             }
 

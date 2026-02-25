@@ -6,8 +6,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 
 class ServiceBookingsTable
 {
@@ -16,76 +19,128 @@ class ServiceBookingsTable
         return $table
             ->columns([
                 TextColumn::make('booking_number')
-                    ->searchable(),
-                TextColumn::make('customer_id')
-                    ->numeric()
+                    ->label('Booking #')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable(),
+
+                TextColumn::make('customer.name')
+                    ->label('Customer')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('provider_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('service_id')
-                    ->numeric()
-                    ->sortable(),
+
+                TextColumn::make('service.name')
+                    ->label('Service')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('primary'),
+
+                TextColumn::make('provider.user.name')
+                    ->label('Provider')
+                    ->searchable()
+                    ->placeholder('Not Assigned'),
+
                 TextColumn::make('status')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'pending' => 'warning',
+                        'confirmed' => 'info',
+                        'in_progress', 'started' => 'primary',
+                        'completed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('scheduled_at')
-                    ->dateTime()
+                    ->label('Scheduled')
+                    ->dateTime('M j, Y g:i A')
                     ->sortable(),
-                TextColumn::make('started_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('completed_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('latitude')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('longitude')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable(),
+
                 TextColumn::make('total_amount')
-                    ->numeric()
+                    ->label('Total')
+                    ->money('USD')
                     ->sortable(),
-                TextColumn::make('payment_method')
-                    ->searchable(),
+
                 TextColumn::make('payment_status')
-                    ->searchable(),
+                    ->label('Payment')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'paid' => 'success',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        'refunded' => 'info',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('rating')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Rating')
+                    ->badge()
+                    ->color(fn ($state) => match (true) {
+                        $state >= 4 => 'success',
+                        $state >= 3 => 'warning',
+                        $state > 0 => 'danger',
+                        default => 'gray',
+                    })
+                    ->placeholder('-'),
+
+                TextColumn::make('firebase_id')
+                    ->label('Firebase ID')
+                    ->limit(15)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'confirmed' => 'Confirmed',
+                        'in_progress' => 'In Progress',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ]),
+
+                SelectFilter::make('payment_status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'paid' => 'Paid',
+                        'failed' => 'Failed',
+                        'refunded' => 'Refunded',
+                    ]),
+
+                SelectFilter::make('service_id')
+                    ->relationship('service', 'name')
+                    ->label('Service')
+                    ->searchable()
+                    ->preload(),
             ])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('syncToFirestore')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->tooltip('Sync to Firestore')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        if (method_exists($record, 'pushToFirestore')) {
+                            $record->pushToFirestore('update');
+                            Notification::make()
+                                ->title('Sync initiated')
+                                ->success()
+                                ->send();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }
