@@ -84,6 +84,10 @@ class Page extends Model
     public static function defaultContentBlocks(): array
     {
         return [
+            'logo' => [
+                'text' => 'PUMP',
+                'image_url' => '',
+            ],
             'navigation' => [
                 'items' => [
                     ['href' => '#about', 'label' => ['en' => 'About', 'ar' => 'عن PUMP']],

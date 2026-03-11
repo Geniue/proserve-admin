@@ -65,12 +65,19 @@
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
-                <div class="flex items-center gap-2">
-                    <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
-                    </svg>
-                    <span class="text-2xl font-bold">PUMP</span>
-                </div>
+                <a href="/" class="flex items-center gap-2">
+                    <template x-if="blocks.logo?.image_url">
+                        <img :src="blocks.logo.image_url" alt="Logo" style="height: 36px; width: auto;">
+                    </template>
+                    <template x-if="!blocks.logo?.image_url">
+                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
+                        </svg>
+                    </template>
+                    <template x-if="blocks.logo?.text">
+                        <span class="text-2xl font-bold" x-text="blocks.logo.text"></span>
+                    </template>
+                </a>
                 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center gap-8">
@@ -314,10 +321,17 @@
                 <!-- Column 1: Brand (becomes column 4 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-4 text-right' : 'lg:order-1'">
                     <div class="flex items-center gap-2 mb-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
-                        <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
-                        </svg>
-                        <span class="text-2xl font-bold">PUMP</span>
+                        <template x-if="blocks.logo?.image_url">
+                            <img :src="blocks.logo.image_url" alt="Logo" style="height: 32px; width: auto;">
+                        </template>
+                        <template x-if="!blocks.logo?.image_url">
+                            <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
+                            </svg>
+                        </template>
+                        <template x-if="blocks.logo?.text">
+                            <span class="text-2xl font-bold" x-text="blocks.logo.text"></span>
+                        </template>
                     </div>
                     <p class="text-gray-400" x-text="t(blocks.footer?.brand_blurb)"></p>
                 </div>

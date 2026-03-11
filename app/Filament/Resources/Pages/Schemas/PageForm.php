@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Pages\Schemas;
 
 use App\Filament\Forms\Components\IconPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -121,9 +122,40 @@ class PageForm
         ];
     }
 
+    private static function imageField(string $statePath, string $label, string $directory = 'homepage'): array
+    {
+        return [
+            FileUpload::make($statePath . '_upload')
+                ->label($label . ' (Upload)')
+                ->image()
+                ->disk('public')
+                ->directory($directory)
+                ->maxSize(2048)
+                ->imageResizeTargetWidth(1200)
+                ->imageResizeTargetHeight(800)
+                ->columnSpanFull(),
+            TextInput::make($statePath)
+                ->label($label . ' (URL)')
+                ->helperText('Upload an image above or paste an external URL here. Saved automatically on submit.')
+                ->columnSpanFull(),
+        ];
+    }
+
     private static function englishTab(): array
     {
         return [
+            Section::make('Logo')
+                ->schema([
+                    Grid::make(2)
+                        ->schema([
+                            TextInput::make('content_blocks.logo.text')
+                                ->label('Logo Text')
+                                ->helperText('Leave empty to show only the logo image'),
+                            ...self::imageField('content_blocks.logo.image_url', 'Logo Image', 'logo'),
+                        ]),
+                ])
+                ->collapsible(),
+
             Section::make('Hero Section')
                 ->schema([
                     TextInput::make('content_blocks.hero.title.en')
@@ -132,9 +164,7 @@ class PageForm
                     Textarea::make('content_blocks.hero.description.en')
                         ->label('Hero Description')
                         ->rows(3),
-                    TextInput::make('content_blocks.hero.image_url')
-                        ->label('Hero Image URL')
-                        ->url(),
+                    ...self::imageField('content_blocks.hero.image_url', 'Hero Image', 'hero'),
                     Grid::make(2)
                         ->schema([
                             TextInput::make('content_blocks.hero.google_play_url')
@@ -162,9 +192,7 @@ class PageForm
                     Textarea::make('content_blocks.about.body.en')
                         ->label('About Body')
                         ->rows(4),
-                    TextInput::make('content_blocks.about.image_url')
-                        ->label('About Image URL')
-                        ->url(),
+                    ...self::imageField('content_blocks.about.image_url', 'About Image', 'about'),
                 ])
                 ->collapsible()
                 ->collapsed(),
