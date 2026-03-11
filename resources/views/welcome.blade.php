@@ -2,7 +2,14 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
       x-data="{ 
           darkMode: localStorage.getItem('darkMode') === 'true', 
-          lang: localStorage.getItem('lang') || 'en' 
+          lang: localStorage.getItem('lang') || 'en',
+          blocks: {{ Js::from($blocks) }},
+          seo: {{ Js::from($seo) }},
+          t(obj) { 
+              if (!obj) return ''; 
+              if (typeof obj === 'string') return obj; 
+              return obj[this.lang] || obj['en'] || ''; 
+          }
       }" 
       x-init="
           $watch('darkMode', val => localStorage.setItem('darkMode', val)); 
@@ -19,7 +26,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PUMP - Fast & Reliable Maintenance Services</title>
+    <title x-text="seo[lang]?.title || 'PUMP - Fast & Reliable Maintenance Services'"></title>
+    <meta name="description" :content="seo[lang]?.meta_description || ''">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +42,9 @@
         }
     </script>
     
+    <!-- Iconify (for dynamic icon rendering) -->
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2/dist/iconify-icon.min.js"></script>
+
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
@@ -48,7 +59,8 @@
         }
     </style>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">\n    <!-- Header -->
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <!-- Header -->
     <header class="fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-800">
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
@@ -62,21 +74,8 @@
                 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center gap-8">
-                    <template x-if="lang === 'en'">
-                        <div class="flex items-center gap-8">
-                            <a href="#about" class="hover:text-blue-600 transition-colors">About</a>
-                            <a href="#services" class="hover:text-blue-600 transition-colors">Services</a>
-                            <a href="#how-it-works" class="hover:text-blue-600 transition-colors">How It Works</a>
-                            <a href="#contact" class="hover:text-blue-600 transition-colors">Contact</a>
-                        </div>
-                    </template>
-                    <template x-if="lang === 'ar'">
-                        <div class="flex items-center gap-8">
-                            <a href="#about" class="hover:text-blue-600 transition-colors">عن PUMP</a>
-                            <a href="#services" class="hover:text-blue-600 transition-colors">خدماتنا</a>
-                            <a href="#how-it-works" class="hover:text-blue-600 transition-colors">كيف تعمل</a>
-                            <a href="#contact" class="hover:text-blue-600 transition-colors">تواصل معنا</a>
-                        </div>
+                    <template x-for="item in (blocks.navigation?.items || [])" :key="item.href">
+                        <a :href="item.href" class="hover:text-blue-600 transition-colors" x-text="t(item.label)"></a>
                     </template>
                 </div>
                 
@@ -122,18 +121,12 @@
     <section class="pt-32 pb-20 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900">
         <div class="container mx-auto px-6">
             <div class="flex flex-col lg:flex-row items-center gap-12" :class="lang === 'ar' ? 'lg:flex-row-reverse' : ''">
-                <!-- English Content -->
-                <div x-show="lang === 'en'" class="flex-1 text-center lg:text-left">
-                    <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                        Fast & Reliable<br>
-                        <span class="text-blue-600">Maintenance Services</span>
-                    </h1>
-                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
-                        Easy booking with trusted, verified technicians. Professional service delivered right to your doorstep.
-                    </p>
+                <div class="flex-1 text-center" :class="lang === 'ar' ? 'lg:text-right' : 'lg:text-left'">
+                    <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight" x-html="t(blocks.hero?.title)?.includes(' ') ? t(blocks.hero?.title).replace(/^(.+?)(\s)/, '$1<br><span class=\'text-blue-600\'>') + '</span>' : t(blocks.hero?.title)"></h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-8" x-text="t(blocks.hero?.description)"></p>
                     <div class="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-6">
-                        <!-- Google Play Store -->
-                        <a href="#" class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        <!-- Google Play (shown first in EN, second in AR) -->
+                        <a :href="blocks.hero?.google_play_url || '#'" class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
                             <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
                             </svg>
@@ -142,56 +135,26 @@
                                 <div class="text-lg font-semibold -mt-1">Google Play</div>
                             </div>
                         </a>
-                        <!-- Apple App Store - Coming Soon -->
-                        <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed opacity-60">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">Download on the</div>
-                                <div class="text-lg font-semibold -mt-1">App Store</div>
+                        <!-- App Store Badge -->
+                        <template x-if="blocks.hero?.app_store_badge_mode !== 'hidden'">
+                            <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed opacity-60" :class="lang === 'ar' ? 'order-1' : 'order-2'" dir="ltr">
+                                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
+                                </svg>
+                                <div class="text-left">
+                                    <div class="text-xs">Download on the</div>
+                                    <div class="text-lg font-semibold -mt-1">App Store</div>
+                                </div>
+                                <template x-if="blocks.hero?.app_store_badge_mode === 'coming_soon'">
+                                    <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full" x-text="t(blocks.hero?.app_store_badge_label) || (lang === 'ar' ? 'قريباً' : 'Coming Soon')"></span>
+                                </template>
                             </div>
-                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">Coming Soon</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Arabic Content -->
-                <div x-show="lang === 'ar'" class="flex-1 text-center lg:text-right">
-                    <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                        خدمات صيانة<br>
-                        <span class="text-blue-600">سريعة وموثوقة</span>
-                    </h1>
-                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
-                        حجز سهل مع فنيين موثوقين ومعتمدين. خدمة احترافية تصل إلى باب منزلك.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-6">
-                        <!-- Apple App Store - Coming Soon -->
-                        <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed opacity-60" dir="ltr">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">Download on the</div>
-                                <div class="text-lg font-semibold -mt-1">App Store</div>
-                            </div>
-                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">قريباً</span>
-                        </div>
-                        <!-- Google Play Store -->
-                        <a href="#" class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors" dir="ltr">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">GET IT ON</div>
-                                <div class="text-lg font-semibold -mt-1">Google Play</div>
-                            </div>
-                        </a>
+                        </template>
                     </div>
                 </div>
 
                 <div class="flex-1">
-                    <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&h=600&fit=crop" alt="Maintenance Services" class="rounded-2xl shadow-2xl" loading="lazy">
+                    <img :src="blocks.hero?.image_url || ''" alt="Maintenance Services" class="rounded-2xl shadow-2xl" loading="lazy">
                 </div>
             </div>
         </div>
@@ -201,24 +164,14 @@
     <section id="about" class="py-20 bg-white dark:bg-gray-900">
         <div class="container mx-auto px-6">
             <div class="max-w-4xl mx-auto">
-                <!-- English Title -->
-                <h2 x-show="lang === 'en'" class="text-4xl font-bold text-center mb-6">About PUMP</h2>
-                <!-- Arabic Title -->
-                <h2 x-show="lang === 'ar'" class="text-4xl font-bold text-center mb-6">عن PUMP</h2>
+                <h2 class="text-4xl font-bold text-center mb-6" x-text="t(blocks.about?.title)"></h2>
                 
                 <div class="flex flex-col lg:flex-row items-center gap-12" :class="lang === 'ar' ? 'lg:flex-row-reverse' : ''">
                     <div class="flex-1">
-                        <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=400&fit=crop" alt="About PUMP" class="rounded-lg shadow-lg" loading="lazy">
+                        <img :src="blocks.about?.image_url || ''" alt="About PUMP" class="rounded-lg shadow-lg" loading="lazy">
                     </div>
                     <div class="flex-1">
-                        <!-- English Content -->
-                        <p x-show="lang === 'en'" class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                            PUMP helps customers get maintenance services easily by connecting them with professional service providers, ensuring quality, speed, and customer satisfaction. Our integrated platform makes it simple to find trusted and verified technicians for all your home and commercial maintenance needs.
-                        </p>
-                        <!-- Arabic Content -->
-                        <p x-show="lang === 'ar'" class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed text-right">
-                            تساعد PUMP العملاء في الحصول على خدمات الصيانة بسهولة من خلال ربطهم بمقدمي الخدمات المحترفين، مما يضمن الجودة والسرعة ورضا العملاء. تجعل منصتنا المتكاملة من السهل العثور على فنيين موثوقين ومعتمدين لجميع احتياجات صيانة منزلك وأعمالك التجارية.
-                        </p>
+                        <p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed" :class="lang === 'ar' ? 'text-right' : ''" x-text="t(blocks.about?.body)"></p>
                     </div>
                 </div>
             </div>
@@ -228,151 +181,38 @@
     <!-- Services Section -->
     <section id="services" class="py-20 bg-gray-50 dark:bg-gray-800">
         <div class="container mx-auto px-6">
-            <!-- English Title -->
-            <div x-show="lang === 'en'">
-                <h2 class="text-4xl font-bold text-center mb-4">Our Services</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-                    Comprehensive maintenance solutions for all your needs
-                </p>
-            </div>
-            <!-- Arabic Title -->
-            <div x-show="lang === 'ar'">
-                <h2 class="text-4xl font-bold text-center mb-4">خدماتنا</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-                    حلول صيانة شاملة لجميع احتياجاتك
-                </p>
-            </div>
+            <h2 class="text-4xl font-bold text-center mb-4" x-text="t(blocks.services?.title)"></h2>
+            <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto" x-text="t(blocks.services?.description)"></p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <!-- General Cleaning -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"
+                 x-data="{
+                     svcBg: [
+                         'bg-blue-100 dark:bg-blue-900', 'bg-green-100 dark:bg-green-900',
+                         'bg-yellow-100 dark:bg-yellow-900', 'bg-cyan-100 dark:bg-cyan-900',
+                         'bg-purple-100 dark:bg-purple-900', 'bg-red-100 dark:bg-red-900',
+                         'bg-orange-100 dark:bg-orange-900', 'bg-pink-100 dark:bg-pink-900',
+                         'bg-indigo-100 dark:bg-indigo-900', 'bg-teal-100 dark:bg-teal-900'
+                     ],
+                     svcFg: [
+                         'color: #2563eb', 'color: #16a34a', 'color: #ca8a04', 'color: #0891b2',
+                         'color: #9333ea', 'color: #dc2626', 'color: #ea580c', 'color: #db2777',
+                         'color: #4f46e5', 'color: #0d9488'
+                     ]
+                 }">
+                <template x-for="(service, idx) in (blocks.services?.items || [])" :key="idx">
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                             :class="svcBg[idx % svcBg.length]">
+                            <iconify-icon
+                                :icon="'heroicons:' + (service.icon || 'cube')"
+                                width="32" height="32"
+                                :style="svcFg[idx % svcFg.length]">
+                            </iconify-icon>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2" x-text="t(service.title)"></h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" x-text="t(service.description)"></p>
                     </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">General Cleaning</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Professional cleaning for homes and offices</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">التنظيف العام</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">تنظيف احترافي للمنازل والمكاتب</p>
-                </div>
-
-                <!-- Plumbing -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Plumbing</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Expert plumbing repairs and installations</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">السباكة</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">إصلاحات وتركيبات السباكة الخبيرة</p>
-                </div>
-
-                <!-- Electrical -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Electrical</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Safe and certified electrical services</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">الكهرباء</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">خدمات كهربائية آمنة ومعتمدة</p>
-                </div>
-
-                <!-- Air Conditioning -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-cyan-100 dark:bg-cyan-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Air Conditioning</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">AC maintenance, repair, and installation</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">التكييف والتبريد</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">صيانة وإصلاح وتركيب المكيفات</p>
-                </div>
-
-                <!-- Home Appliances -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Home Appliances</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Repair and maintenance for all appliances</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">صيانة الأجهزة المنزلية</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">إصلاح وصيانة جميع الأجهزة</p>
-                </div>
-
-                <!-- Painting -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Painting & Finishing</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Interior and exterior painting services</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">الدهان والتشطيب</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">خدمات الدهان الداخلي والخارجي</p>
-                </div>
-
-                <!-- Carpentry -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Carpentry</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Custom woodwork and furniture repair</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">النجارة</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">أعمال خشبية مخصصة وإصلاح الأثاث</p>
-                </div>
-
-                <!-- Pest Control -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Pest Control</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Safe and effective pest elimination</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">مكافحة الحشرات</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">القضاء الآمن والفعال على الآفات</p>
-                </div>
-
-                <!-- Moving Services -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Moving Services</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Professional packing and moving assistance</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">خدمات النقل</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">مساعدة احترافية في التعبئة والنقل</p>
-                </div>
-
-                <!-- Car Wash -->
-                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-xl transition-shadow text-center">
-                    <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="font-semibold text-lg mb-2">Car Wash</h3>
-                    <p x-show="lang === 'en'" class="text-sm text-gray-600 dark:text-gray-400">Premium car cleaning and detailing services</p>
-                    <h3 x-show="lang === 'ar'" class="font-semibold text-lg mb-2">غسيل السيارات</h3>
-                    <p x-show="lang === 'ar'" class="text-sm text-gray-600 dark:text-gray-400">خدمات غسيل وتنظيف السيارات المتميزة</p>
-                </div>
+                </template>
             </div>
         </div>
     </section>
@@ -380,93 +220,31 @@
     <!-- Why Choose PUMP Section -->
     <section class="py-20 bg-white dark:bg-gray-900">
         <div class="container mx-auto px-6">
-            <!-- English Title -->
-            <div x-show="lang === 'en'">
-                <h2 class="text-4xl font-bold text-center mb-4">Why Choose PUMP</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-                    Quality service you can trust
-                </p>
-            </div>
-            <!-- Arabic Title -->
-            <div x-show="lang === 'ar'">
-                <h2 class="text-4xl font-bold text-center mb-4">لماذا تختار PUMP</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-                    خدمة عالية الجودة يمكنك الوثوق بها
-                </p>
-            </div>
+            <h2 class="text-4xl font-bold text-center mb-4" x-text="t(blocks.why_choose_us?.title)"></h2>
+            <p class="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto" x-text="t(blocks.why_choose_us?.description)"></p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                 x-data="{
+                     whyGrad: [
+                         'from-blue-500 to-blue-600', 'from-green-500 to-green-600',
+                         'from-yellow-500 to-yellow-600', 'from-purple-500 to-purple-600',
+                         'from-red-500 to-red-600', 'from-cyan-500 to-cyan-600'
+                     ]
+                 }">
+                <template x-for="(reason, idx) in (blocks.why_choose_us?.items || [])" :key="idx">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+                             :class="whyGrad[idx % whyGrad.length]">
+                            <iconify-icon
+                                :icon="'heroicons:' + (reason.icon || 'check-circle')"
+                                width="40" height="40"
+                                style="color: white">
+                            </iconify-icon>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3" x-text="t(reason.title)"></h3>
+                        <p class="text-gray-600 dark:text-gray-400" x-text="t(reason.description)"></p>
                     </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">30-Day Service Guarantee</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">We stand behind our work with a comprehensive guarantee</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">ضمان الخدمة لمدة 30 يومًا</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">نقف وراء عملنا بضمان شامل</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Verified Technicians</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">All service providers are thoroughly vetted and certified</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">فنيون معتمدون</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">جميع مقدمي الخدمات تم فحصهم واعتمادهم بدقة</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Competitive & Transparent Pricing</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Fair rates with no hidden fees - know exactly what you'll pay</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">أسعار تنافسية وشفافة</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">أسعار عادلة بدون رسوم خفية - اعرف بالضبط ما ستدفعه</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Easy & Fast Booking</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Schedule services quickly through our simple platform</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">حجز سهل وسريع</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">جدولة الخدمات بسرعة من خلال منصتنا البسيطة</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Wide Range of Services</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Comprehensive solutions for all your maintenance needs</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">مجموعة واسعة من الخدمات</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">حلول شاملة لجميع احتياجات الصيانة الخاصة بك</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </div>
-                    <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Continuous Customer Support</h3>
-                    <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">24/7 support team ready to assist you anytime</p>
-                    <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">دعم العملاء المستمر</h3>
-                    <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">فريق دعم على مدار الساعة جاهز لمساعدتك في أي وقت</p>
-               </div>
+                </template>
             </div>
         </div>
     </section>
@@ -474,69 +252,22 @@
     <!-- How It Works Section -->
     <section id="how-it-works" class="py-20 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900">
         <div class="container mx-auto px-6">
-            <!-- English Title -->
-            <div x-show="lang === 'en'">
-                <h2 class="text-4xl font-bold text-center mb-4">How It Works</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-16 max-w-2xl mx-auto">
-                    Getting quality service is simple and straightforward
-                </p>
-            </div>
-            <!-- Arabic Title -->
-            <div x-show="lang === 'ar'">
-                <h2 class="text-4xl font-bold text-center mb-4">كيف تعمل</h2>
-                <p class="text-center text-gray-600 dark:text-gray-300 mb-16 max-w-2xl mx-auto">
-                    الحصول على خدمة عالية الجودة بسيط ومباشر
-                </p>
-            </div>
+            <h2 class="text-4xl font-bold text-center mb-4" x-text="t(blocks.how_it_works?.title)"></h2>
+            <p class="text-center text-gray-600 dark:text-gray-300 mb-16 max-w-2xl mx-auto" x-text="t(blocks.how_it_works?.description)"></p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="relative text-center">
-                    <div class="relative z-10">
-                        <div class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold shadow-lg">
-                            01
+                @php
+                    $stepColors = ['blue', 'green', 'yellow', 'purple'];
+                @endphp
+                <template x-for="(step, idx) in (blocks.how_it_works?.steps || [])" :key="idx">
+                    <div class="relative text-center">
+                        <div class="relative z-10">
+                            <div class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold shadow-lg" x-text="step.number"></div>
+                            <h3 class="text-xl font-semibold mb-3" x-text="t(step.title)"></h3>
+                            <p class="text-gray-600 dark:text-gray-400" x-text="t(step.description)"></p>
                         </div>
-                        <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Choose the Service</h3>
-                        <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Select the service you need from our wide range of options</p>
-                        <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">اختر الخدمة</h3>
-                        <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">اختر الخدمة التي تحتاجها من مجموعتنا الواسعة من الخيارات</p>
                     </div>
-                </div>
-
-                <div class="relative text-center">
-                    <div class="relative z-10">
-                        <div class="w-24 h-24 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold shadow-lg">
-                            02
-                        </div>
-                        <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Select Time & Location</h3>
-                        <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Pick your preferred date, time, and service location</p>
-                        <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">اختر الوقت والموقع</h3>
-                        <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">اختر التاريخ والوقت وموقع الخدمة المفضل لديك</p>
-                    </div>
-                </div>
-
-                <div class="relative text-center">
-                    <div class="relative z-10">
-                        <div class="w-24 h-24 bg-yellow-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold shadow-lg">
-                            03
-                        </div>
-                        <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Confirm the Request</h3>
-                        <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Review and confirm your service booking details</p>
-                        <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">أكد الطلب</h3>
-                        <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">راجع وأكد تفاصيل حجز الخدمة الخاصة بك</p>
-                    </div>
-                </div>
-
-                <div class="relative text-center">
-                    <div class="relative z-10">
-                        <div class="w-24 h-24 bg-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold shadow-lg">
-                            04
-                        </div>
-                        <h3 x-show="lang === 'en'" class="text-xl font-semibold mb-3">Technician Arrives on Time</h3>
-                        <p x-show="lang === 'en'" class="text-gray-600 dark:text-gray-400">Our verified professional arrives punctually and completes the job</p>
-                        <h3 x-show="lang === 'ar'" class="text-xl font-semibold mb-3">وصول الفني في الوقت المحدد</h3>
-                        <p x-show="lang === 'ar'" class="text-gray-600 dark:text-gray-400">يصل المحترف المعتمد لدينا في الوقت المحدد ويكمل العمل</p>
-                    </div>
-                </div>
+                </template>
             </div>
         </div>
     </section>
@@ -544,70 +275,35 @@
     <!-- CTA Section -->
     <section class="py-20 bg-blue-600 text-white">
         <div class="container mx-auto px-6 text-center">
-            <!-- English Content -->
-            <template x-if="lang === 'en'">
-                <div>
-                    <h2 class="text-4xl font-bold mb-6">Download PUMP App Now</h2>
-                    <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-                        Get instant access to professional maintenance services. Available on Android, coming soon to iOS.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                        <!-- Google Play Store -->
-                        <a href="#" class="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">GET IT ON</div>
-                                <div class="text-lg font-semibold -mt-1">Google Play</div>
-                            </div>
-                        </a>
-                        <!-- Apple App Store - Coming Soon -->
-                        <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-white/30 text-white rounded-lg cursor-not-allowed opacity-60">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">Download on the</div>
-                                <div class="text-lg font-semibold -mt-1">App Store</div>
-                            </div>
-                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">Coming Soon</span>
-                        </div>
+            <h2 class="text-4xl font-bold mb-6" x-text="t(blocks.cta?.title)"></h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90" x-text="t(blocks.cta?.description)"></p>
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                <!-- Google Play -->
+                <a :href="blocks.hero?.google_play_url || '#'" class="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
+                    </svg>
+                    <div class="text-left">
+                        <div class="text-xs">GET IT ON</div>
+                        <div class="text-lg font-semibold -mt-1">Google Play</div>
                     </div>
-                </div>
-            </template>
-            <!-- Arabic Content -->
-            <template x-if="lang === 'ar'">
-                <div>
-                    <h2 class="text-4xl font-bold mb-6">حمّل تطبيق PUMP الآن</h2>
-                    <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-                        احصل على وصول فوري لخدمات الصيانة الاحترافية. متاح على أندرويد، قريباً على iOS.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                        <!-- Apple App Store - Coming Soon -->
-                        <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-white/30 text-white rounded-lg cursor-not-allowed opacity-60" dir="ltr">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">Download on the</div>
-                                <div class="text-lg font-semibold -mt-1">App Store</div>
-                            </div>
-                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">قريباً</span>
+                </a>
+                <!-- App Store - Coming Soon -->
+                <template x-if="blocks.hero?.app_store_badge_mode !== 'hidden'">
+                    <div class="relative inline-flex items-center gap-3 px-6 py-3 bg-white/30 text-white rounded-lg cursor-not-allowed opacity-60" :class="lang === 'ar' ? 'order-1' : 'order-2'" dir="ltr">
+                        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
+                        </svg>
+                        <div class="text-left">
+                            <div class="text-xs">Download on the</div>
+                            <div class="text-lg font-semibold -mt-1">App Store</div>
                         </div>
-                        <!-- Google Play Store -->
-                        <a href="#" class="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl" dir="ltr">
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
-                            </svg>
-                            <div class="text-left">
-                                <div class="text-xs">GET IT ON</div>
-                                <div class="text-lg font-semibold -mt-1">Google Play</div>
-                            </div>
-                        </a>
+                        <template x-if="blocks.hero?.app_store_badge_mode === 'coming_soon'">
+                            <span class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full" x-text="t(blocks.hero?.app_store_badge_label) || (lang === 'ar' ? 'قريباً' : 'Coming Soon')"></span>
+                        </template>
                     </div>
-                </div>
-            </template>
+                </template>
+            </div>
         </div>
     </section>
 
@@ -623,57 +319,48 @@
                         </svg>
                         <span class="text-2xl font-bold">PUMP</span>
                     </div>
-                    <p x-show="lang === 'en'" class="text-gray-400">
-                        Your trusted platform for professional home and commercial maintenance services. Quality you can count on.
-                    </p>
-                    <p x-show="lang === 'ar'" class="text-gray-400">
-                        منصتك الموثوقة للخدمات المهنية لصيانة المنازل والأعمال التجارية. جودة يمكنك الاعتماد عليها.
-                    </p>
+                    <p class="text-gray-400" x-text="t(blocks.footer?.brand_blurb)"></p>
                 </div>
 
                 <!-- Column 2: Contact (becomes column 3 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-3 text-right' : 'lg:order-2'">
-                    <h3 x-show="lang === 'en'" class="text-lg font-semibold mb-4">Contact Us</h3>
-                    <h3 x-show="lang === 'ar'" class="text-lg font-semibold mb-4">تواصل معنا</h3>
+                    <h3 class="text-lg font-semibold mb-4" x-text="t(blocks.footer?.contact_title)"></h3>
                     <div class="space-y-3">
                         <div class="flex items-center gap-3" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
                             <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                             </svg>
-                            <span class="text-gray-400">+1 (800) PUMP-123</span>
+                            <span class="text-gray-400" x-text="blocks.footer?.contact?.phone"></span>
                         </div>
                         <div class="flex items-center gap-3" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
                             <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
-                            <span class="text-gray-400">hello@pump.services</span>
+                            <span class="text-gray-400" x-text="blocks.footer?.contact?.email"></span>
                         </div>
                         <div class="flex items-center gap-3" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
                             <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <span class="text-gray-400">123 Service Ave, City, State</span>
+                            <span class="text-gray-400" x-text="t(blocks.footer?.contact?.address)"></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Column 3: Quick Links (becomes column 2 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-2 text-right' : 'lg:order-3'">
-                    <h3 x-show="lang === 'en'" class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <h3 x-show="lang === 'ar'" class="text-lg font-semibold mb-4">روابط سريعة</h3>
+                    <h3 class="text-lg font-semibold mb-4" x-text="t(blocks.footer?.quick_links_title)"></h3>
                     <ul class="space-y-2">
-                        <li><a href="#about" class="text-gray-400 hover:text-white transition-colors" x-text="lang === 'en' ? 'About' : 'عن PUMP'"></a></li>
-                        <li><a href="#services" class="text-gray-400 hover:text-white transition-colors" x-text="lang === 'en' ? 'Services' : 'خدماتنا'"></a></li>
-                        <li><a href="#how-it-works" class="text-gray-400 hover:text-white transition-colors" x-text="lang === 'en' ? 'How It Works' : 'كيف تعمل'"></a></li>
-                        <li><a href="#contact" class="text-gray-400 hover:text-white transition-colors" x-text="lang === 'en' ? 'Contact' : 'تواصل معنا'"></a></li>
+                        <template x-for="item in (blocks.navigation?.items || [])" :key="'footer-' + item.href">
+                            <li><a :href="item.href" class="text-gray-400 hover:text-white transition-colors" x-text="t(item.label)"></a></li>
+                        </template>
                     </ul>
                 </div>
 
                 <!-- Column 4: Social Media (becomes column 1 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-1 text-right' : 'lg:order-4'">
-                    <h3 x-show="lang === 'en'" class="text-lg font-semibold mb-4">Follow Us</h3>
-                    <h3 x-show="lang === 'ar'" class="text-lg font-semibold mb-4">تابعنا</h3>
+                    <h3 class="text-lg font-semibold mb-4" x-text="t(blocks.footer?.social_title)"></h3>
                     <div class="flex gap-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
                         <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -700,8 +387,7 @@
             </div>
 
             <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
-                <p x-show="lang === 'en'">&copy; {{ date('Y') }} PUMP. All rights reserved.</p>
-                <p x-show="lang === 'ar'">&copy; {{ date('Y') }} PUMP. جميع الحقوق محفوظة.</p>
+                <p>&copy; {{ date('Y') }} <span x-text="t(blocks.footer?.copyright)"></span></p>
             </div>
         </div>
     </footer>

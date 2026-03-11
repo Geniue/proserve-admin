@@ -3,17 +3,17 @@
 namespace App\Filament\Resources\Pages\Pages;
 
 use App\Filament\Resources\Pages\PageResource;
-use Filament\Actions\CreateAction;
+use App\Models\Page;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPages extends ListRecords
 {
     protected static string $resource = PageResource::class;
 
-    protected function getHeaderActions(): array
+    public function mount(): void
     {
-        return [
-            CreateAction::make(),
-        ];
+        $homepage = Page::firstOrCreateHomepage();
+
+        $this->redirect(PageResource::getUrl('edit', ['record' => $homepage]));
     }
 }
