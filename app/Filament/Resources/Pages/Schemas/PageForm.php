@@ -141,17 +141,46 @@ class PageForm
         ];
     }
 
+    private static function logoImageField(string $statePath, string $label): array
+    {
+        return [
+            FileUpload::make($statePath . '_upload')
+                ->label($label . ' (Upload)')
+                ->image()
+                ->disk('public')
+                ->directory('logo')
+                ->maxSize(1024)
+                ->imageResizeTargetWidth(400)
+                ->imageResizeTargetHeight(400)
+                ->columnSpanFull(),
+            TextInput::make($statePath)
+                ->label($label . ' (URL)')
+                ->helperText('Upload an image above or paste an external URL here.')
+                ->columnSpanFull(),
+        ];
+    }
+
     private static function englishTab(): array
     {
         return [
             Section::make('Logo')
                 ->schema([
+                    TextInput::make('content_blocks.logo.text')
+                        ->label('Logo Text')
+                        ->helperText('Leave empty to show only the logo image')
+                        ->columnSpanFull(),
                     Grid::make(2)
                         ->schema([
-                            TextInput::make('content_blocks.logo.text')
-                                ->label('Logo Text')
-                                ->helperText('Leave empty to show only the logo image'),
-                            ...self::imageField('content_blocks.logo.image_url', 'Logo Image', 'logo'),
+                            Section::make('Dark Logo')
+                                ->description('Shown in header on light backgrounds')
+                                ->schema([
+                                    ...self::logoImageField('content_blocks.logo.dark_image_url', 'Dark Logo'),
+                                ]),
+                            Section::make('White Logo')
+                                ->description('Shown in header on dark mode')
+                                ->schema([
+                                    ...self::logoImageField('content_blocks.logo.white_image_url', 'White Logo'),
+                                ]),
                         ]),
                 ])
                 ->collapsible(),
@@ -317,6 +346,13 @@ class PageForm
 
             Section::make('Footer')
                 ->schema([
+                    Section::make('Footer Logo')
+                        ->description('Logo displayed in the footer (dark background). Falls back to white logo if not set.')
+                        ->schema([
+                            ...self::logoImageField('content_blocks.footer.logo_image_url', 'Footer Logo'),
+                        ])
+                        ->collapsible()
+                        ->collapsed(),
                     Textarea::make('content_blocks.footer.brand_blurb.en')
                         ->label('Brand Blurb')
                         ->rows(2),

@@ -9,6 +9,9 @@
               if (!obj) return ''; 
               if (typeof obj === 'string') return obj; 
               return obj[this.lang] || obj['en'] || ''; 
+          },
+          get footerLogoSrc() {
+              return (this.blocks.footer?.logo_image_url) || (this.blocks.logo?.white_image_url) || (this.blocks.logo?.dark_image_url) || '';
           }
       }" 
       x-init="
@@ -65,18 +68,15 @@
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
-                <a href="/" class="flex items-center gap-2">
-                    <template x-if="blocks.logo?.image_url">
-                        <img :src="blocks.logo.image_url" alt="Logo" style="height: 36px; width: auto;">
-                    </template>
-                    <template x-if="!blocks.logo?.image_url">
-                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
-                        </svg>
-                    </template>
-                    <template x-if="blocks.logo?.text">
-                        <span class="text-2xl font-bold" x-text="blocks.logo.text"></span>
-                    </template>
+                <a href="/" class="flex items-center gap-2" style="overflow: hidden; height: 48px;">
+                    <img x-show="darkMode && blocks.logo?.white_image_url" :src="blocks.logo?.white_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
+                    <img x-show="!darkMode && blocks.logo?.dark_image_url" :src="blocks.logo?.dark_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
+                    <img x-show="darkMode && !blocks.logo?.white_image_url && blocks.logo?.dark_image_url" :src="blocks.logo?.dark_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
+                    <img x-show="!darkMode && !blocks.logo?.dark_image_url && blocks.logo?.white_image_url" :src="blocks.logo?.white_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
+                    <svg x-show="!blocks.logo?.dark_image_url && !blocks.logo?.white_image_url" style="width: 36px; height: 36px; color: #2563eb;" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
+                    </svg>
+                    <span x-show="blocks.logo?.text" class="text-2xl font-bold" x-text="blocks.logo?.text"></span>
                 </a>
                 
                 <!-- Desktop Navigation -->
@@ -320,18 +320,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                 <!-- Column 1: Brand (becomes column 4 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-4 text-right' : 'lg:order-1'">
-                    <div class="flex items-center gap-2 mb-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
-                        <template x-if="blocks.logo?.image_url">
-                            <img :src="blocks.logo.image_url" alt="Logo" style="height: 32px; width: auto;">
-                        </template>
-                        <template x-if="!blocks.logo?.image_url">
-                            <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
-                            </svg>
-                        </template>
-                        <template x-if="blocks.logo?.text">
-                            <span class="text-2xl font-bold" x-text="blocks.logo.text"></span>
-                        </template>
+                    <div class="flex items-center gap-2 mb-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''" style="overflow: hidden; height: 40px;">
+                        <img x-show="footerLogoSrc" :src="footerLogoSrc" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
+                        <svg x-show="!footerLogoSrc" style="width: 36px; height: 36px; color: #3b82f6;" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
+                        </svg>
+                        <span x-show="blocks.logo?.text" class="text-2xl font-bold" x-text="blocks.logo?.text"></span>
                     </div>
                     <p class="text-gray-400" x-text="t(blocks.footer?.brand_blurb)"></p>
                 </div>

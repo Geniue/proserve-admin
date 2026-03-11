@@ -86,7 +86,8 @@ class Page extends Model
         return [
             'logo' => [
                 'text' => 'PUMP',
-                'image_url' => '',
+                'dark_image_url' => '',
+                'white_image_url' => '',
             ],
             'navigation' => [
                 'items' => [
@@ -153,6 +154,7 @@ class Page extends Model
                 'description' => ['en' => 'Get instant access to professional maintenance services. Available on Android, coming soon to iOS.', 'ar' => 'احصل على وصول فوري لخدمات الصيانة الاحترافية. متاح على أندرويد، قريباً على iOS.'],
             ],
             'footer' => [
+                'logo_image_url' => '',
                 'brand_blurb' => ['en' => 'Your trusted platform for professional home and commercial maintenance services. Quality you can count on.', 'ar' => 'منصتك الموثوقة للخدمات المهنية لصيانة المنازل والأعمال التجارية. جودة يمكنك الاعتماد عليها.'],
                 'contact_title' => ['en' => 'Contact Us', 'ar' => 'تواصل معنا'],
                 'quick_links_title' => ['en' => 'Quick Links', 'ar' => 'روابط سريعة'],
