@@ -37,12 +37,21 @@ class FileController extends Controller
      */
     public function upload(Request $request): JsonResponse
     {
-        $request->validate([
-            'file'    => 'required|file|max:' . config('services.proserve.max_upload_kb', 10240),
-            'folder'  => 'required|string|alpha_dash|max:50',
-            'user_id' => 'required|string|alpha_dash|max:128',
-        ]);
+        try {
+            $request->validate([
+                'file'    => 'required|file|max:' . config('services.proserve.max_upload_kb', 10240),
+                'folder'  => 'required|string|alpha_dash|max:50',
+                'user_id' => 'required|string|alpha_dash|max:128',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+        }
 
+        try {
         $file = $request->file('file');
         $folder = $request->input('folder');
         $userId = $request->input('user_id');
@@ -94,6 +103,16 @@ class FileController extends Controller
             'mime_type' => $detectedMime,
             'is_image'  => $isImage,
         ]);
+
+        } catch (\Exception $e) {
+            \Log::error('File upload failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
