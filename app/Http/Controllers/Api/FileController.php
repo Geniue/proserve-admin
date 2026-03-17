@@ -75,14 +75,14 @@ class FileController extends Controller
         } else {
             // Store non-image files as-is
             $file->storeAs(
-                dirname("uploads/{$relativePath}"),
+                dirname($relativePath),
                 basename($relativePath),
                 'public'
             );
         }
 
-        $publicUrl = asset("storage/uploads/{$relativePath}");
-        $fileSize = Storage::disk('public')->size("uploads/{$relativePath}");
+        $publicUrl = asset("storage/{$relativePath}");
+        $fileSize = Storage::disk('public')->size($relativePath);
 
         return response()->json([
             'success'   => true,
@@ -112,19 +112,17 @@ class FileController extends Controller
             ], 400);
         }
 
-        $fullPath = "uploads/{$path}";
-
-        if (!Storage::disk('public')->exists($fullPath)) {
+        if (!Storage::disk('public')->exists($path)) {
             return response()->json([
                 'success' => false,
                 'message' => 'File not found',
             ], 404);
         }
 
-        $mimeType = Storage::disk('public')->mimeType($fullPath);
+        $mimeType = Storage::disk('public')->mimeType($path);
 
-        return response()->streamDownload(function () use ($fullPath) {
-            echo Storage::disk('public')->get($fullPath);
+        return response()->streamDownload(function () use ($path) {
+            echo Storage::disk('public')->get($path);
         }, basename($path), [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
@@ -153,16 +151,14 @@ class FileController extends Controller
             ], 400);
         }
 
-        $fullPath = "uploads/{$relativePath}";
-
-        if (!Storage::disk('public')->exists($fullPath)) {
+        if (!Storage::disk('public')->exists($relativePath)) {
             return response()->json([
                 'success' => false,
                 'message' => 'File not found',
             ], 404);
         }
 
-        Storage::disk('public')->delete($fullPath);
+        Storage::disk('public')->delete($relativePath);
 
         return response()->json([
             'success' => true,
@@ -188,17 +184,15 @@ class FileController extends Controller
             // Encode to JPEG for compression (converts HEIC/PNG/WebP → JPEG)
             $encoded = $image->toJpeg($quality);
 
-            $storagePath = "uploads/{$relativePath}";
-
             // Ensure directory exists
-            $dir = dirname($storagePath);
+            $dir = dirname($relativePath);
             if (!Storage::disk('public')->exists($dir)) {
                 Storage::disk('public')->makeDirectory($dir);
             }
 
-            Storage::disk('public')->put($storagePath, (string) $encoded);
+            Storage::disk('public')->put($relativePath, (string) $encoded);
 
-            return $storagePath;
+            return $relativePath;
         } catch (\Exception $e) {
             \Log::error('Image compression failed: ' . $e->getMessage());
             return null;
