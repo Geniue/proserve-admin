@@ -10,6 +10,48 @@ class ServiceBooking extends Model
 {
     use SoftDeletes, SyncToFirestore;
 
+    protected static function booted(): void
+    {
+        static::creating(function (ServiceBooking $booking) {
+            if (empty($booking->booking_number)) {
+                $booking->booking_number = 'BK-' . strtoupper(uniqid());
+            }
+        });
+
+        static::created(function (ServiceBooking $booking) {
+            BookingEvent::logStatusChange($booking, '', $booking->status ?? 'pending');
+        });
+
+        static::updating(function (ServiceBooking $booking) {
+            if ($booking->isDirty('status')) {
+                BookingEvent::logStatusChange(
+                    $booking,
+                    $booking->getOriginal('status'),
+                    $booking->status
+                );
+            }
+
+            if ($booking->isDirty('payment_status')) {
+                BookingEvent::logPayment($booking, "Payment status changed to {$booking->payment_status}", [
+                    'from' => $booking->getOriginal('payment_status'),
+                    'to' => $booking->payment_status,
+                    'method' => $booking->payment_method,
+                    'amount' => $booking->total_amount,
+                ]);
+            }
+
+            if ($booking->isDirty('provider_id') && $booking->provider_id) {
+                BookingEvent::create([
+                    'service_booking_id' => $booking->id,
+                    'event_type' => 'assignment',
+                    'description' => 'Provider assigned to booking',
+                    'metadata' => ['provider_id' => $booking->provider_id],
+                    'performed_by' => auth()->user()?->email ?? 'system',
+                ]);
+            }
+        });
+    }
+
     protected $fillable = [
         'firebase_id',
         'booking_number',
@@ -63,6 +105,11 @@ class ServiceBooking extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function events()
+    {
+        return $this->hasMany(BookingEvent::class, 'service_booking_id')->orderBy('created_at', 'desc');
     }
 
     /**

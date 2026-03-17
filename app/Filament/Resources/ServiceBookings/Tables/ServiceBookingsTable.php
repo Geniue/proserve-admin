@@ -121,6 +121,29 @@ class ServiceBookingsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('downloadReceipt')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->tooltip('Download Receipt PDF')
+                    ->url(fn ($record) => route('receipts.pdf', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn ($record) => $record->status === 'completed'),
+                Action::make('emailReceipt')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->tooltip('Email Receipt')
+                    ->requiresConfirmation()
+                    ->modalHeading('Send Receipt via Email')
+                    ->modalDescription(fn ($record) => "Send receipt to {$record->customer?->email}?")
+                    ->visible(fn ($record) => $record->status === 'completed' && $record->customer?->email)
+                    ->action(function ($record) {
+                        \Illuminate\Support\Facades\Mail::to($record->customer->email)
+                            ->send(new \App\Mail\BookingReceiptMail($record));
+                        Notification::make()
+                            ->title('Receipt sent to ' . $record->customer->email)
+                            ->success()
+                            ->send();
+                    }),
                 Action::make('syncToFirestore')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')

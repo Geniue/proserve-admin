@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'proserve' => [
+        'api_key' => env('PROSERVE_API_KEY'),
+        'max_upload_kb' => env('PROSERVE_MAX_UPLOAD_KB', 10240),
+        'image_max_width' => env('PROSERVE_IMAGE_MAX_WIDTH', 1200),
+        'image_max_height' => env('PROSERVE_IMAGE_MAX_HEIGHT', 1200),
+        'image_quality' => env('PROSERVE_IMAGE_QUALITY', 80),
+    ],
+
 ];

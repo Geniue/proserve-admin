@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\VersionController;
 use App\Http\Controllers\Api\V1\NavigationController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\FileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,4 +74,11 @@ Route::prefix('v1')->group(function () {
         // Bookings routes (to be implemented)
         // Route::resource('bookings', BookingController::class);
     });
+});
+
+// File upload/download API (API key auth)
+Route::middleware('api.key')->prefix('files')->group(function () {
+    Route::post('/upload', [FileController::class, 'upload']);
+    Route::get('/{path}', [FileController::class, 'show'])->where('path', '.*');
+    Route::post('/delete', [FileController::class, 'destroy']);
 });

@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Configure rate limiting for API
         $middleware->throttleApi('60,1'); // 60 requests per minute
+
+        // Custom middleware aliases
+        $middleware->alias([
+            'api.key' => \App\Http\Middleware\VerifyApiKey::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
