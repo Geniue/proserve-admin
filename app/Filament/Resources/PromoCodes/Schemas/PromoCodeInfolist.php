@@ -6,6 +6,7 @@ use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\TextSize;
 
 class PromoCodeInfolist
 {
@@ -19,7 +20,7 @@ class PromoCodeInfolist
                         TextEntry::make('code')
                             ->label('Promo Code')
                             ->weight('bold')
-                            ->size(TextEntry\TextEntrySize::Large)
+                            ->size(TextSize::Large)
                             ->copyable(),
                         TextEntry::make('description_en')->label('Description (EN)')->placeholder('-'),
                         TextEntry::make('description_ar')->label('Description (AR)')->placeholder('-'),
