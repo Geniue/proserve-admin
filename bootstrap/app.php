@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Configure CORS
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
         
+        // Prevent search engines from indexing admin pages
+        $middleware->append(\App\Http\Middleware\NoIndexAdminPages::class);
+        
         // Configure rate limiting for API
         $middleware->throttleApi('60,1'); // 60 requests per minute
 

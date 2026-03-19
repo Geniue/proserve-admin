@@ -59,7 +59,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn () => new HtmlString('<script src="https://cdn.jsdelivr.net/npm/iconify-icon@2/dist/iconify-icon.min.js"></script>'),
+                fn () => new HtmlString(
+                    '<meta name="robots" content="noindex, nofollow">' .
+                    '<script src="https://cdn.jsdelivr.net/npm/iconify-icon@2/dist/iconify-icon.min.js"></script>'
+                ),
             );
     }
 }
