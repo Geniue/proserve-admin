@@ -1,76 +1,116 @@
 <x-filament-panels::page>
-  <div
-    x-data="supportChat()"
-    x-init="initChat()"
-    class="flex h-[calc(100vh-180px)] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700"
-  >
+  <style>
+    .sc-wrap { display:flex; height:calc(100vh - 180px); border-radius:0.75rem; overflow:hidden; border:1px solid #e5e7eb; }
+    .dark .sc-wrap { border-color:#374151; }
+    .sc-left { width:320px; min-width:320px; border-right:1px solid #e5e7eb; background:#fff; display:flex; flex-direction:column; overflow:hidden; }
+    .dark .sc-left { border-color:#374151; background:#111827; }
+    .sc-right { flex:1; display:flex; flex-direction:column; background:#f9fafb; }
+    .dark .sc-right { background:#030712; }
+    .sc-search { padding:0.75rem; border-bottom:1px solid #e5e7eb; }
+    .dark .sc-search { border-color:#374151; }
+    .sc-search input { width:100%; border-radius:0.5rem; border:1px solid #d1d5db; padding:0.5rem 0.75rem; font-size:0.875rem; outline:none; }
+    .dark .sc-search input { background:#1f2937; border-color:#4b5563; color:#fff; }
+    .sc-search input:focus { border-color:#f59e0b; box-shadow:0 0 0 2px rgba(245,158,11,0.2); }
+    .sc-filters { display:flex; gap:4px; margin-top:0.5rem; }
+    .sc-filter-btn { font-size:0.75rem; padding:2px 8px; border-radius:9999px; cursor:pointer; border:none; transition:all 0.15s; }
+    .sc-filter-btn.active { background:#f59e0b; color:#fff; }
+    .sc-filter-btn:not(.active) { background:#f3f4f6; color:#6b7280; }
+    .dark .sc-filter-btn:not(.active) { background:#1f2937; color:#9ca3af; }
+    .sc-chatlist { flex:1; overflow-y:auto; }
+    .sc-chatitem { display:flex; align-items:center; gap:0.75rem; padding:0.75rem; cursor:pointer; border-bottom:1px solid #f3f4f6; transition:background 0.15s; }
+    .dark .sc-chatitem { border-color:#1f2937; }
+    .sc-chatitem:hover { background:#f9fafb; }
+    .dark .sc-chatitem:hover { background:#1f2937; }
+    .sc-chatitem.selected { background:#fffbeb; }
+    .dark .sc-chatitem.selected { background:#1c1917; }
+    .sc-avatar { width:40px; height:40px; border-radius:50%; background:#fef3c7; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; }
+    .dark .sc-avatar { background:#78350f; }
+    .sc-avatar span { color:#d97706; font-weight:700; font-size:0.875rem; }
+    .dark .sc-avatar span { color:#fbbf24; }
+    .sc-badge { position:absolute; top:-4px; right:-4px; width:20px; height:20px; background:#ef4444; border-radius:50%; color:#fff; font-size:0.625rem; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .sc-chatmeta { flex:1; min-width:0; }
+    .sc-chatname { font-weight:500; font-size:0.875rem; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dark .sc-chatname { color:#fff; }
+    .sc-chattime { font-size:10px; color:#9ca3af; white-space:nowrap; margin-left:4px; }
+    .sc-chatpreview { font-size:0.75rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+    .dark .sc-chatpreview { color:#9ca3af; }
+    .sc-status-pill { font-size:10px; padding:1px 6px; border-radius:9999px; white-space:nowrap; margin-left:4px; }
+    .sc-status-active { background:#dcfce7; color:#15803d; }
+    .dark .sc-status-active { background:#14532d; color:#4ade80; }
+    .sc-status-waiting { background:#fef9c3; color:#a16207; }
+    .dark .sc-status-waiting { background:#713f12; color:#facc15; }
+    .sc-status-closed { background:#f3f4f6; color:#6b7280; }
+    .dark .sc-status-closed { background:#1f2937; color:#6b7280; }
+    .sc-empty { padding:1.5rem; text-align:center; color:#9ca3af; font-size:0.875rem; }
+    .sc-header { display:flex; align-items:center; justify-content:space-between; padding:1rem; background:#fff; border-bottom:1px solid #e5e7eb; }
+    .dark .sc-header { background:#111827; border-color:#374151; }
+    .sc-header h3 { font-weight:600; color:#111827; margin:0; font-size:1rem; }
+    .dark .sc-header h3 { color:#fff; }
+    .sc-header-sub { display:flex; align-items:center; gap:0.5rem; margin-top:2px; font-size:0.75rem; color:#6b7280; }
+    .dark .sc-header-sub { color:#9ca3af; }
+    .sc-header select { font-size:0.875rem; border-radius:0.5rem; border:1px solid #d1d5db; padding:4px 8px; }
+    .dark .sc-header select { background:#1f2937; border-color:#4b5563; color:#fff; }
+    .sc-messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.75rem; }
+    .sc-msg-row { display:flex; }
+    .sc-msg-row.from-admin { justify-content:flex-end; }
+    .sc-msg-row.from-user { justify-content:flex-start; }
+    .sc-bubble { max-width:70%; padding:0.625rem 1rem; border-radius:1rem; }
+    .sc-bubble.admin { background:#f59e0b; color:#fff; border-bottom-right-radius:0.375rem; }
+    .sc-bubble.user { background:#fff; color:#374151; border-bottom-left-radius:0.375rem; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+    .dark .sc-bubble.user { background:#1f2937; color:#e5e7eb; }
+    .sc-bubble p { font-size:0.875rem; line-height:1.5; margin:0; }
+    .sc-bubble img { max-width:240px; border-radius:0.5rem; margin-bottom:0.375rem; cursor:pointer; }
+    .sc-bubble-meta { font-size:10px; opacity:0.6; margin-top:4px; }
+    .sc-input-bar { display:flex; gap:0.5rem; padding:0.75rem; background:#fff; border-top:1px solid #e5e7eb; }
+    .dark .sc-input-bar { background:#111827; border-color:#374151; }
+    .sc-input-bar input { flex:1; border-radius:9999px; border:1px solid #d1d5db; padding:0.5rem 1rem; font-size:0.875rem; outline:none; }
+    .dark .sc-input-bar input { background:#1f2937; border-color:#4b5563; color:#fff; }
+    .sc-input-bar input:focus { border-color:#f59e0b; box-shadow:0 0 0 2px rgba(245,158,11,0.2); }
+    .sc-send-btn { background:#f59e0b; color:#fff; border:none; border-radius:9999px; padding:0.5rem 1.25rem; font-size:0.875rem; font-weight:500; cursor:pointer; transition:background 0.15s; }
+    .sc-send-btn:hover { background:#d97706; }
+    .sc-send-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .sc-placeholder { flex:1; display:flex; align-items:center; justify-content:center; color:#9ca3af; }
+    .sc-placeholder svg { width:64px; height:64px; opacity:0.3; margin-bottom:0.75rem; }
+    .sc-placeholder p { font-size:0.875rem; }
+    .sc-type-pill { font-size:10px; padding:1px 6px; border-radius:9999px; background:#f3f4f6; color:#6b7280; }
+    .dark .sc-type-pill { background:#1f2937; color:#9ca3af; }
+  </style>
+
+  <div x-data="supportChat()" x-init="initChat()" class="sc-wrap">
     {{-- Left: Chat list --}}
-    <div class="w-[320px] border-e border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto flex flex-col">
-      {{-- Search --}}
-      <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-        <input
-          x-model="searchQuery"
-          type="text"
-          placeholder="Search by name or phone..."
-          class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
-        />
-        <div class="flex gap-1 mt-2">
-          <button
-            @click="statusFilter = ''"
-            :class="statusFilter === '' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
-            class="text-xs px-2 py-1 rounded-full transition"
-          >All</button>
-          <button
-            @click="statusFilter = 'active'"
-            :class="statusFilter === 'active' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
-            class="text-xs px-2 py-1 rounded-full transition"
-          >Active</button>
-          <button
-            @click="statusFilter = 'waiting'"
-            :class="statusFilter === 'waiting' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
-            class="text-xs px-2 py-1 rounded-full transition"
-          >Waiting</button>
-          <button
-            @click="statusFilter = 'closed'"
-            :class="statusFilter === 'closed' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
-            class="text-xs px-2 py-1 rounded-full transition"
-          >Closed</button>
+    <div class="sc-left">
+      <div class="sc-search">
+        <input x-model="searchQuery" type="text" placeholder="Search by name or phone..." />
+        <div class="sc-filters">
+          <button @click="statusFilter = ''" class="sc-filter-btn" :class="{ active: statusFilter === '' }">All</button>
+          <button @click="statusFilter = 'active'" class="sc-filter-btn" :class="{ active: statusFilter === 'active' }">Active</button>
+          <button @click="statusFilter = 'waiting'" class="sc-filter-btn" :class="{ active: statusFilter === 'waiting' }">Waiting</button>
+          <button @click="statusFilter = 'closed'" class="sc-filter-btn" :class="{ active: statusFilter === 'closed' }">Closed</button>
         </div>
       </div>
 
-      {{-- Chat list --}}
-      <div class="flex-1 overflow-y-auto">
+      <div class="sc-chatlist">
         <template x-for="chat in filteredChats" :key="chat.id">
-          <div
-            @click="selectChat(chat)"
-            :class="{ 'bg-primary-50 dark:bg-primary-950': selectedChatId === chat.id }"
-            class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 transition"
-          >
-            <div class="relative flex-shrink-0">
-              <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                <span class="text-primary-600 dark:text-primary-400 font-bold text-sm" x-text="chat.userName?.charAt(0)?.toUpperCase() || '?'"></span>
-              </div>
-              <div
-                x-show="chat.unreadByAdmin > 0"
-                class="absolute -top-1 -right-1 w-5 h-5 bg-danger-500 rounded-full text-white text-xs flex items-center justify-center font-bold"
-                x-text="chat.unreadByAdmin"
-              ></div>
+          <div @click="selectChat(chat)" class="sc-chatitem" :class="{ selected: selectedChatId === chat.id }">
+            <div class="sc-avatar">
+              <span x-text="chat.userName?.charAt(0)?.toUpperCase() || '?'"></span>
+              <div x-show="chat.unreadByAdmin > 0" class="sc-badge" x-text="chat.unreadByAdmin"></div>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between items-center">
-                <span class="font-medium text-sm truncate text-gray-900 dark:text-white" x-text="chat.userName || chat.userPhone || 'Unknown'"></span>
-                <span class="text-[10px] text-gray-400 flex-shrink-0 ms-1" x-text="formatTime(chat.lastMessageAt)"></span>
+            <div class="sc-chatmeta">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="sc-chatname" x-text="chat.userName || chat.userPhone || 'Unknown'"></span>
+                <span class="sc-chattime" x-text="formatTime(chat.lastMessageAt)"></span>
               </div>
-              <div class="flex justify-between items-center mt-0.5">
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="chat.lastMessage || 'No messages yet'"></p>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <p class="sc-chatpreview" x-text="chat.lastMessage || 'No messages yet'"></p>
                 <span
                   x-show="chat.status"
+                  class="sc-status-pill"
                   :class="{
-                    'bg-success-100 text-success-700 dark:bg-success-900 dark:text-success-400': chat.status === 'active',
-                    'bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-400': chat.status === 'waiting',
-                    'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500': chat.status === 'closed',
+                    'sc-status-active': chat.status === 'active',
+                    'sc-status-waiting': chat.status === 'waiting',
+                    'sc-status-closed': chat.status === 'closed',
                   }"
-                  class="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ms-1"
                   x-text="chat.status"
                 ></span>
               </div>
@@ -78,35 +118,26 @@
           </div>
         </template>
 
-        <div x-show="filteredChats.length === 0" class="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+        <div x-show="filteredChats.length === 0" class="sc-empty">
           No conversations found
         </div>
       </div>
     </div>
 
     {{-- Right: Messages --}}
-    <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div class="sc-right">
       <template x-if="selectedChatId">
-        <div class="flex flex-col h-full">
-          {{-- Header --}}
-          <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div style="display:flex; flex-direction:column; height:100%;">
+          <div class="sc-header">
             <div>
-              <h3 class="font-semibold text-gray-900 dark:text-white" x-text="selectedChat?.userName || 'Unknown'"></h3>
-              <div class="flex items-center gap-2 mt-0.5">
-                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="selectedChat?.userPhone || ''"></p>
-                <span
-                  x-show="selectedChat?.userType"
-                  class="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                  x-text="selectedChat?.userType"
-                ></span>
+              <h3 x-text="selectedChat?.userName || 'Unknown'"></h3>
+              <div class="sc-header-sub">
+                <span x-text="selectedChat?.userPhone || ''"></span>
+                <span x-show="selectedChat?.userType" class="sc-type-pill" x-text="selectedChat?.userType"></span>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <select
-                x-model="chatStatus"
-                @change="updateChatStatus()"
-                class="text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-2 py-1 focus:ring-primary-500 focus:border-primary-500"
-              >
+            <div>
+              <select x-model="chatStatus" @change="updateChatStatus()">
                 <option value="active">Active</option>
                 <option value="waiting">Waiting</option>
                 <option value="closed">Closed</option>
@@ -114,60 +145,41 @@
             </div>
           </div>
 
-          {{-- Messages --}}
-          <div x-ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div x-ref="messageContainer" class="sc-messages">
             <template x-for="msg in messages" :key="msg.id">
-              <div :class="msg.senderType === 'admin' ? 'flex justify-end' : 'flex justify-start'">
-                <div
-                  :class="msg.senderType === 'admin'
-                    ? 'bg-primary-500 text-white rounded-2xl rounded-br-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md shadow-sm'"
-                  class="max-w-[70%] px-4 py-2.5"
-                >
+              <div class="sc-msg-row" :class="msg.senderType === 'admin' ? 'from-admin' : 'from-user'">
+                <div class="sc-bubble" :class="msg.senderType === 'admin' ? 'admin' : 'user'">
                   <template x-if="msg.imageUrl">
-                    <img :src="msg.imageUrl" class="max-w-[240px] rounded-lg mb-1.5 cursor-pointer" @click="window.open(msg.imageUrl, '_blank')" />
+                    <img :src="msg.imageUrl" @click="window.open(msg.imageUrl, '_blank')" />
                   </template>
-                  <p x-show="msg.message" class="text-sm leading-relaxed" x-text="msg.message"></p>
-                  <div class="flex items-center gap-1 mt-1" :class="msg.senderType === 'admin' ? 'justify-end' : 'justify-start'">
-                    <span x-show="msg.senderType === 'admin' && msg.senderName" class="text-[10px] opacity-50" x-text="msg.senderName"></span>
-                    <span class="text-[10px] opacity-50" x-text="formatTime(msg.timestamp)"></span>
+                  <p x-show="msg.message" x-text="msg.message"></p>
+                  <div class="sc-bubble-meta" :style="msg.senderType === 'admin' ? 'text-align:right' : 'text-align:left'">
+                    <span x-show="msg.senderType === 'admin' && msg.senderName" x-text="msg.senderName + ' · '"></span>
+                    <span x-text="formatTime(msg.timestamp)"></span>
                   </div>
                 </div>
               </div>
             </template>
 
-            <div x-show="messages.length === 0" class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-sm">
+            <div x-show="messages.length === 0" style="flex:1; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:0.875rem;">
               No messages in this conversation
             </div>
           </div>
 
-          {{-- Input --}}
-          <div class="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-            <input
-              x-model="newMessage"
-              @keydown.enter="sendMessage()"
-              type="text"
-              placeholder="Type a message..."
-              class="flex-1 rounded-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-4 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
-            />
-            <button
-              @click="sendMessage()"
-              :disabled="!newMessage.trim()"
-              class="bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full px-5 py-2 text-sm font-medium transition"
-            >
-              Send
-            </button>
+          <div class="sc-input-bar">
+            <input x-model="newMessage" @keydown.enter="sendMessage()" type="text" placeholder="Type a message..." />
+            <button @click="sendMessage()" :disabled="!newMessage.trim()" class="sc-send-btn">Send</button>
           </div>
         </div>
       </template>
 
       <template x-if="!selectedChatId">
-        <div class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500">
-          <div class="text-center">
-            <svg class="w-16 h-16 mx-auto mb-3 opacity-30" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <div class="sc-placeholder">
+          <div style="text-align:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:64px; height:64px; margin:0 auto 12px; opacity:0.3;">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
             </svg>
-            <p class="text-sm">Select a conversation to start chatting</p>
+            <p>Select a conversation to start chatting</p>
           </div>
         </div>
       </template>
