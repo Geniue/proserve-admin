@@ -43,4 +43,11 @@ return [
         'image_quality' => env('PROSERVE_IMAGE_QUALITY', 80),
     ],
 
+    'whatsapp' => [
+        'access_token'     => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id'  => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'template_name'    => env('WHATSAPP_TEMPLATE_NAME', 'hello_world'),
+        'use_otp_template' => env('WHATSAPP_USE_OTP_TEMPLATE', false),
+    ],
+
 ];

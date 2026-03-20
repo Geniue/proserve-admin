@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\NavigationController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\FileController;
+use App\Http\Controllers\Api\WhatsAppOtpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,4 +82,9 @@ Route::middleware('api.key')->prefix('files')->group(function () {
     Route::post('/upload', [FileController::class, 'upload']);
     Route::get('/{path}', [FileController::class, 'show'])->where('path', '.*');
     Route::post('/delete', [FileController::class, 'destroy']);
+});
+
+// WhatsApp OTP proxy (API key auth)
+Route::middleware('api.key')->prefix('otp')->group(function () {
+    Route::post('/whatsapp', [WhatsAppOtpController::class, 'send']);
 });
