@@ -9,6 +9,7 @@ Route::get('/', [HomeController::class, 'index']);
 Route::get('/terms', [LegalController::class, 'terms']);
 Route::get('/privacy', [LegalController::class, 'privacy']);
 Route::get('/about', [LegalController::class, 'about']);
+Route::get('/delete-account', fn () => view('delete-account'));
 
 Route::get('/sitemap.xml', function () {
     $urls = [
@@ -16,6 +17,7 @@ Route::get('/sitemap.xml', function () {
         ['loc' => url('/terms'), 'changefreq' => 'monthly', 'priority' => '0.5'],
         ['loc' => url('/privacy'), 'changefreq' => 'monthly', 'priority' => '0.5'],
         ['loc' => url('/about'), 'changefreq' => 'monthly', 'priority' => '0.5'],
+        ['loc' => url('/delete-account'), 'changefreq' => 'monthly', 'priority' => '0.3'],
     ];
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
