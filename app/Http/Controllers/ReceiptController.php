@@ -35,6 +35,7 @@ class ReceiptController extends Controller
             'autoArabic' => true,
             'autoLangToFont' => true,
             'autoScriptToLang' => true,
+            'tempDir' => storage_path('app/mpdf'),
         ]);
 
         $mpdf->WriteHTML($html);
@@ -75,6 +76,7 @@ class ReceiptController extends Controller
             'autoArabic' => true,
             'autoLangToFont' => true,
             'autoScriptToLang' => true,
+            'tempDir' => storage_path('app/mpdf'),
         ]);
 
         $mpdf->WriteHTML($html);
