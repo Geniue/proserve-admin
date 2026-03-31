@@ -29,9 +29,8 @@
         .prose th { background: #f9fafb; font-weight: 600; color: #374151; }
         .prose td { color: #4b5563; }
     </style>
+    <script src="https://analytics.ahrefs.com/analytics.js" data-key="qiPuIAZrOjGu4euMtfYb+w" async></script>
 </head>
-<body class="bg-gray-50 text-gray-900">
-    <header class="bg-white border-b border-gray-200">
         <nav class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-2xl font-bold text-blue-600">PUMP</a>
             <div class="flex items-center gap-6 text-sm font-medium text-gray-600">

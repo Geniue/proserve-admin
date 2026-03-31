@@ -61,8 +61,8 @@
             scroll-behavior: smooth;
         }
     </style>
+    <script src="https://analytics.ahrefs.com/analytics.js" data-key="qiPuIAZrOjGu4euMtfYb+w" async></script>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-800">
         <nav class="container mx-auto px-6 py-4">

@@ -94,9 +94,8 @@
             font-weight: 600;
         }
     </style>
+    <script src="https://analytics.ahrefs.com/analytics.js" data-key="qiPuIAZrOjGu4euMtfYb+w" async></script>
 </head>
-<body>
-    <div class="container">
         <div class="card">
             <!-- Language toggle -->
             <div class="lang-toggle">
