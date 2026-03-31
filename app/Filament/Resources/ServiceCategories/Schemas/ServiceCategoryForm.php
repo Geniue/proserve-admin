@@ -19,7 +19,8 @@ class ServiceCategoryForm
                     ->required(),
                 Textarea::make('description')
                     ->columnSpanFull(),
-                TextInput::make('icon_url'),
+                TextInput::make('icon_url')
+                    ->helperText('Category icon URL · Recommended: 120 × 120px square PNG'),
                 TextInput::make('color_code')
                     ->required()
                     ->default('#000000'),

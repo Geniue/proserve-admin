@@ -52,6 +52,7 @@ class OfferForm
                     ->schema([
                         FileUpload::make('image_url')
                             ->label('Banner Image')
+                            ->helperText('Recommended: 800 × 400px (2:1 ratio) · JPG, PNG or WebP')
                             ->image()
                             ->directory('offers')
                             ->columnSpanFull(),

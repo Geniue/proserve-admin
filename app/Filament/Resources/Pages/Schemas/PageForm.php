@@ -127,6 +127,7 @@ class PageForm
         return [
             FileUpload::make($statePath . '_upload')
                 ->label($label . ' (Upload)')
+                ->helperText('Recommended: 1200 × 800px · Max 2MB · JPG, PNG or WebP')
                 ->image()
                 ->disk('public')
                 ->directory($directory)
@@ -146,6 +147,7 @@ class PageForm
         return [
             FileUpload::make($statePath . '_upload')
                 ->label($label . ' (Upload)')
+                ->helperText('Recommended: 400 × 400px · Max 1MB · PNG with transparent background')
                 ->image()
                 ->disk('public')
                 ->directory('logo')

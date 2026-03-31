@@ -21,6 +21,7 @@ class BannerForm
                     ->columnSpanFull(),
                 FileUpload::make('image_url')
                     ->image()
+                    ->helperText('Recommended: 1080 × 540px (2:1 ratio) · JPG, PNG or WebP')
                     ->required(),
                 TextInput::make('link_type'),
                 TextInput::make('link_value'),

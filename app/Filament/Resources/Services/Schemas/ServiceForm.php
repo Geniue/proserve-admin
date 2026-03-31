@@ -25,7 +25,8 @@ class ServiceForm
                     ->columnSpanFull(),
                 Textarea::make('short_description')
                     ->columnSpanFull(),
-                TextInput::make('icon_url'),
+                TextInput::make('icon_url')
+                    ->helperText('Service icon URL · Recommended: 120 × 120px square PNG'),
                 TextInput::make('images'),
                 TextInput::make('price_min')
                     ->numeric(),
