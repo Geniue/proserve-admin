@@ -43,34 +43,47 @@ class WhatsAppOtpController extends Controller
         // Strip leading "+" for Meta API (expects digits only)
         $recipient = ltrim($phone, '+');
 
-        // Build the template payload
+        // Build the message payload
         if ($useOtp) {
-            $templatePayload = [
-                'name'     => $templateName,
-                'language' => ['code' => $lang === 'ar' ? 'ar' : 'en'],
-                'components' => [
-                    [
-                        'type'       => 'body',
-                        'parameters' => [
-                            ['type' => 'text', 'text' => $otp],
+            // Approved Authentication template with OTP button
+            $body = [
+                'messaging_product' => 'whatsapp',
+                'to'                => $recipient,
+                'type'              => 'template',
+                'template'          => [
+                    'name'     => $templateName,
+                    'language' => ['code' => $lang === 'ar' ? 'ar' : 'en'],
+                    'components' => [
+                        [
+                            'type'       => 'body',
+                            'parameters' => [
+                                ['type' => 'text', 'text' => $otp],
+                            ],
+                        ],
+                        [
+                            'type'       => 'button',
+                            'sub_type'   => 'url',
+                            'index'      => 0,
+                            'parameters' => [
+                                ['type' => 'text', 'text' => $otp],
+                            ],
                         ],
                     ],
                 ],
             ];
         } else {
-            // Sandbox: hello_world (no parameters)
-            $templatePayload = [
-                'name'     => $templateName,
-                'language' => ['code' => 'en_US'],
+            // Plain text mode: sends OTP as a regular message (no template needed)
+            $message = $lang === 'ar'
+                ? "رمز التحقق الخاص بك في PUMP هو: *{$otp}*\nصالح لمدة 5 دقائق. لا تشارك هذا الرمز مع أي شخص."
+                : "Your PUMP verification code is: *{$otp}*\nValid for 5 minutes. Do not share this code.";
+
+            $body = [
+                'messaging_product' => 'whatsapp',
+                'to'                => $recipient,
+                'type'              => 'text',
+                'text'              => ['body' => $message],
             ];
         }
-
-        $body = [
-            'messaging_product' => 'whatsapp',
-            'to'                => $recipient,
-            'type'              => 'template',
-            'template'          => $templatePayload,
-        ];
 
         try {
             $response = Http::withToken($accessToken)
