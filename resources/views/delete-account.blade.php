@@ -105,13 +105,13 @@
             <!-- English Version -->
             <div id="en-content">
                 <h1>Delete Your Account</h1>
-                <p class="app-name">ProServe (Pump Now) — Home Services App</p>
+                <p class="app-name">PUMP — Home Services App</p>
 
                 <h2>How to Delete Your Account</h2>
 
                 <p><strong>Option 1 — From the app:</strong></p>
                 <ol>
-                    <li>Open the ProServe app</li>
+                    <li>Open the PUMP app</li>
                     <li>Go to <strong>Settings</strong> (bottom navigation bar)</li>
                     <li>Tap <strong>Delete Account</strong></li>
                     <li>Confirm the deletion when prompted</li>
@@ -149,13 +149,13 @@
             <!-- Arabic Version -->
             <div id="ar-content" dir="rtl" style="display: none;">
                 <h1>حذف حسابك</h1>
-                <p class="app-name">بروسيرف (بامب ناو) — تطبيق الخدمات المنزلية</p>
+                <p class="app-name">بامب PUMP — تطبيق الخدمات المنزلية</p>
 
                 <h2>كيفية حذف حسابك</h2>
 
                 <p><strong>الطريقة الأولى — من التطبيق:</strong></p>
                 <ol>
-                    <li>افتح تطبيق بروسيرف</li>
+                    <li>افتح تطبيق بامب PUMP</li>
                     <li>اذهب إلى <strong>الإعدادات</strong> (شريط التنقل السفلي)</li>
                     <li>انقر على <strong>حذف الحساب</strong></li>
                     <li>قم بتأكيد الحذف عند ظهور الرسالة</li>
@@ -192,7 +192,7 @@
         </div>
 
         <div class="footer">
-            &copy; 2026 ProServe (Pump Now). All rights reserved.
+            &copy; 2026 PUMP. All rights reserved.
         </div>
     </div>
 
