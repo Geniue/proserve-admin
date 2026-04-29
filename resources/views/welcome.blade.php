@@ -363,6 +363,18 @@
                         <template x-for="item in (blocks.navigation?.items || [])" :key="'footer-' + item.href">
                             <li><a :href="item.href" class="text-gray-400 hover:text-white transition-colors" x-text="t(item.label)"></a></li>
                         </template>
+                        <li>
+                            <a href="{{ url('/privacy') }}" class="text-gray-400 hover:text-white transition-colors">
+                                <span x-show="lang === 'en'">Privacy Policy</span>
+                                <span x-show="lang === 'ar'">سياسة الخصوصية</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url('/terms') }}" class="text-gray-400 hover:text-white transition-colors">
+                                <span x-show="lang === 'en'">Terms & Conditions</span>
+                                <span x-show="lang === 'ar'">الشروط والأحكام</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
