@@ -125,8 +125,8 @@ class PageForm
     private static function imageField(string $statePath, string $label, string $directory = 'homepage'): array
     {
         return [
-            FileUpload::make($statePath . '_upload')
-                ->label($label . ' (Upload)')
+            FileUpload::make($statePath.'_upload')
+                ->label($label.' (Upload)')
                 ->helperText('Recommended: 1200 × 800px · Max 2MB · JPG, PNG or WebP')
                 ->image()
                 ->disk('public')
@@ -136,7 +136,7 @@ class PageForm
                 ->imageResizeTargetHeight(800)
                 ->columnSpanFull(),
             TextInput::make($statePath)
-                ->label($label . ' (URL)')
+                ->label($label.' (URL)')
                 ->helperText('Upload an image above or paste an external URL here. Saved automatically on submit.')
                 ->columnSpanFull(),
         ];
@@ -145,18 +145,21 @@ class PageForm
     private static function logoImageField(string $statePath, string $label): array
     {
         return [
-            FileUpload::make($statePath . '_upload')
-                ->label($label . ' (Upload)')
-                ->helperText('Recommended: 400 × 400px · Max 1MB · PNG with transparent background')
+            FileUpload::make($statePath.'_upload')
+                ->label($label.' (Upload)')
+                ->helperText('Recommended: 640 x 240px or SVG/PNG with transparent background. Max 1MB.')
                 ->image()
                 ->disk('public')
                 ->directory('logo')
                 ->maxSize(1024)
-                ->imageResizeTargetWidth(400)
-                ->imageResizeTargetHeight(400)
+                ->imagePreviewHeight('120')
+                ->imageResizeMode('contain')
+                ->imageResizeTargetWidth('640')
+                ->imageResizeTargetHeight('240')
+                ->imageResizeUpscale(false)
                 ->columnSpanFull(),
             TextInput::make($statePath)
-                ->label($label . ' (URL)')
+                ->label($label.' (URL)')
                 ->helperText('Upload an image above or paste an external URL here.')
                 ->columnSpanFull(),
         ];
@@ -309,7 +312,7 @@ class PageForm
                         ])
                         ->collapsible()
                         ->collapsed()
-                        ->itemLabel(fn (array $state): ?string => ($state['number'] ?? '') . ' - ' . ($state['title']['en'] ?? '')),
+                        ->itemLabel(fn (array $state): ?string => ($state['number'] ?? '').' - '.($state['title']['en'] ?? '')),
                 ])
                 ->collapsible()
                 ->collapsed(),
@@ -492,7 +495,7 @@ class PageForm
                         ])
                         ->collapsible()
                         ->collapsed()
-                        ->itemLabel(fn (array $state): ?string => ($state['number'] ?? '') . ' - ' . ($state['title']['ar'] ?? '')),
+                        ->itemLabel(fn (array $state): ?string => ($state['number'] ?? '').' - '.($state['title']['ar'] ?? '')),
                 ])
                 ->collapsible()
                 ->collapsed(),

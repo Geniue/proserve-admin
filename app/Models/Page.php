@@ -9,6 +9,8 @@ class Page extends Model
 {
     use SoftDeletes;
 
+    public const ANDROID_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=app.pump';
+
     protected $fillable = [
         'title',
         'slug',
@@ -63,7 +65,7 @@ class Page extends Model
     {
         $translations = $this->{$field};
 
-        if (!is_array($translations)) {
+        if (! is_array($translations)) {
             return $fallback;
         }
 
@@ -73,6 +75,7 @@ class Page extends Model
     public function getLocalizedSections(string $locale): array
     {
         $blocks = $this->content_blocks ?? [];
+
         return self::resolveLocaleInBlocks($blocks, $locale);
     }
 
@@ -101,7 +104,7 @@ class Page extends Model
                 'title' => ['en' => 'Fast & Reliable Maintenance Services', 'ar' => 'خدمات صيانة سريعة وموثوقة'],
                 'description' => ['en' => 'Easy booking with trusted, verified technicians. Professional service delivered right to your doorstep.', 'ar' => 'حجز سهل مع فنيين موثوقين ومعتمدين. خدمة احترافية تصل إلى باب منزلك.'],
                 'image_url' => 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&h=600&fit=crop',
-                'google_play_url' => '#',
+                'google_play_url' => self::ANDROID_PLAY_STORE_URL,
                 'app_store_url' => '',
                 'app_store_badge_mode' => 'coming_soon',
                 'app_store_badge_label' => ['en' => 'Coming Soon', 'ar' => 'قريباً'],
@@ -183,6 +186,7 @@ class Page extends Model
                 $resolved[$key] = $value;
             }
         }
+
         return $resolved;
     }
 }

@@ -62,6 +62,38 @@ class HomepageTest extends TestCase
         $this->assertNotEmpty($blocks['hero']['title']['ar']);
     }
 
+    public function test_homepage_default_google_play_url_points_to_play_store(): void
+    {
+        $page = Page::firstOrCreateHomepage();
+
+        $this->assertSame(
+            Page::ANDROID_PLAY_STORE_URL,
+            $page->content_blocks['hero']['google_play_url']
+        );
+    }
+
+    public function test_homepage_renders_play_store_fallback_for_placeholder_url(): void
+    {
+        $blocks = Page::defaultContentBlocks();
+        $blocks['hero']['google_play_url'] = '#';
+
+        Page::create([
+            'title' => 'Homepage',
+            'slug' => 'home',
+            'content' => '',
+            'is_active' => true,
+            'content_blocks' => $blocks,
+            'seo_translations' => ['en' => [], 'ar' => []],
+        ]);
+
+        $response = $this->get('/');
+
+        $this->assertStringContainsString(
+            str_replace('/', '\\/', Page::ANDROID_PLAY_STORE_URL),
+            $response->getContent()
+        );
+    }
+
     public function test_api_homepage_returns_json(): void
     {
         Page::firstOrCreateHomepage();

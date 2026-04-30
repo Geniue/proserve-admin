@@ -5,13 +5,29 @@
           lang: localStorage.getItem('lang') || 'en',
           blocks: {{ Js::from($blocks) }},
           seo: {{ Js::from($seo) }},
+          playStoreFallbackUrl: @js(\App\Models\Page::ANDROID_PLAY_STORE_URL),
           t(obj) { 
               if (!obj) return ''; 
               if (typeof obj === 'string') return obj; 
               return obj[this.lang] || obj['en'] || ''; 
           },
+          get headerLogoSrc() {
+              const darkLogo = String(this.blocks.logo?.dark_image_url || '').trim();
+              const whiteLogo = String(this.blocks.logo?.white_image_url || '').trim();
+
+              return this.darkMode ? (whiteLogo || darkLogo) : (darkLogo || whiteLogo);
+          },
           get footerLogoSrc() {
-              return (this.blocks.footer?.logo_image_url) || (this.blocks.logo?.white_image_url) || (this.blocks.logo?.dark_image_url) || '';
+              const footerLogo = String(this.blocks.footer?.logo_image_url || '').trim();
+              const whiteLogo = String(this.blocks.logo?.white_image_url || '').trim();
+              const darkLogo = String(this.blocks.logo?.dark_image_url || '').trim();
+
+              return footerLogo || whiteLogo || darkLogo;
+          },
+          get playStoreUrl() {
+              const url = String(this.blocks.hero?.google_play_url || '').trim();
+
+              return url && url !== '#' ? url : this.playStoreFallbackUrl;
           }
       }" 
       x-init="
@@ -60,6 +76,38 @@
         html {
             scroll-behavior: smooth;
         }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .site-logo-link {
+            min-width: 0;
+            max-width: min(220px, 52vw);
+        }
+
+        .site-logo-image {
+            display: block;
+            width: auto;
+            height: 40px;
+            max-width: 180px;
+            max-height: 40px;
+            object-fit: contain;
+            object-position: left center;
+        }
+
+        [dir="rtl"] .site-logo-image {
+            object-position: right center;
+        }
+
+        .footer-logo-image {
+            display: block;
+            width: auto;
+            height: 36px;
+            max-width: 180px;
+            max-height: 36px;
+            object-fit: contain;
+        }
     </style>
     <script src="https://analytics.ahrefs.com/analytics.js" data-key="qiPuIAZrOjGu4euMtfYb+w" async></script>
 </head>
@@ -68,12 +116,9 @@
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
-                <a href="/" class="flex items-center gap-2" style="overflow: hidden; height: 48px;">
-                    <img x-show="darkMode && blocks.logo?.white_image_url" :src="blocks.logo?.white_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
-                    <img x-show="!darkMode && blocks.logo?.dark_image_url" :src="blocks.logo?.dark_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
-                    <img x-show="darkMode && !blocks.logo?.white_image_url && blocks.logo?.dark_image_url" :src="blocks.logo?.dark_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
-                    <img x-show="!darkMode && !blocks.logo?.dark_image_url && blocks.logo?.white_image_url" :src="blocks.logo?.white_image_url" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
-                    <svg x-show="!blocks.logo?.dark_image_url && !blocks.logo?.white_image_url" style="width: 36px; height: 36px; color: #2563eb;" fill="currentColor" viewBox="0 0 24 24">
+                <a href="/" class="site-logo-link flex items-center gap-2" aria-label="PUMP home">
+                    <img x-show="headerLogoSrc" x-cloak :src="headerLogoSrc" alt="PUMP logo" class="site-logo-image">
+                    <svg x-show="!headerLogoSrc" x-cloak style="width: 36px; height: 36px; color: #2563eb;" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
                     </svg>
                     <span x-show="blocks.logo?.text" class="text-2xl font-bold" x-text="blocks.logo?.text"></span>
@@ -133,7 +178,7 @@
                     <p class="text-xl text-gray-600 dark:text-gray-300 mb-8" x-text="t(blocks.hero?.description)"></p>
                     <div class="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-6">
                         <!-- Google Play (shown first in EN, second in AR) -->
-                        <a :href="blocks.hero?.google_play_url || '#'" class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
+                        <a :href="playStoreUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
                             <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
                             </svg>
@@ -286,7 +331,7 @@
             <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90" x-text="t(blocks.cta?.description)"></p>
             <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
                 <!-- Google Play -->
-                <a :href="blocks.hero?.google_play_url || '#'" class="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
+                <a :href="playStoreUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl" :class="lang === 'ar' ? 'order-2' : 'order-1'" dir="ltr">
                     <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
                     </svg>
@@ -320,9 +365,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                 <!-- Column 1: Brand (becomes column 4 in RTL) -->
                 <div :class="lang === 'ar' ? 'lg:order-4 text-right' : 'lg:order-1'">
-                    <div class="flex items-center gap-2 mb-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''" style="overflow: hidden; height: 40px;">
-                        <img x-show="footerLogoSrc" :src="footerLogoSrc" alt="Logo" style="height: 64px; width: auto; max-width: 240px; object-fit: contain; transform: scale(1.4); transform-origin: center;">
-                        <svg x-show="!footerLogoSrc" style="width: 36px; height: 36px; color: #3b82f6;" fill="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-2 mb-4" :class="lang === 'ar' ? 'flex-row-reverse justify-end' : ''">
+                        <img x-show="footerLogoSrc" x-cloak :src="footerLogoSrc" alt="PUMP logo" class="footer-logo-image">
+                        <svg x-show="!footerLogoSrc" x-cloak style="width: 36px; height: 36px; color: #3b82f6;" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.96-7-5.54-7-10V8.3l7-3.11 7 3.11V10c0 4.46-3.13 9.04-7 10z"/>
                         </svg>
                         <span x-show="blocks.logo?.text" class="text-2xl font-bold" x-text="blocks.logo?.text"></span>
