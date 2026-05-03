@@ -26,8 +26,9 @@
           },
           get playStoreUrl() {
               const url = String(this.blocks.hero?.google_play_url || '').trim();
+              const placeholderUrls = ['#', 'https://example.com', 'https://example.com/', 'http://example.com', 'http://example.com/'];
 
-              return url && url !== '#' ? url : this.playStoreFallbackUrl;
+              return url && !placeholderUrls.includes(url) ? url : this.playStoreFallbackUrl;
           }
       }" 
       x-init="
@@ -82,31 +83,29 @@
         }
 
         .site-logo-link {
+            flex-shrink: 0;
             min-width: 0;
-            max-width: min(220px, 52vw);
+            max-width: min(128px, 38vw);
         }
 
         .site-logo-image {
             display: block;
-            width: auto;
-            height: 40px;
-            max-width: 180px;
-            max-height: 40px;
-            object-fit: contain;
-            object-position: left center;
+            width: 104px;
+            height: 26px;
+            object-fit: cover;
+            object-position: center;
         }
 
         [dir="rtl"] .site-logo-image {
-            object-position: right center;
+            object-position: center;
         }
 
         .footer-logo-image {
             display: block;
-            width: auto;
-            height: 36px;
-            max-width: 180px;
-            max-height: 36px;
-            object-fit: contain;
+            width: 128px;
+            height: 32px;
+            object-fit: cover;
+            object-position: center;
         }
     </style>
     <script src="https://analytics.ahrefs.com/analytics.js" data-key="qiPuIAZrOjGu4euMtfYb+w" async></script>

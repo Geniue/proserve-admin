@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Pages\Pages;
 
 use App\Filament\Resources\Pages\PageResource;
+use App\Support\TransparentImageTrimmer;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
@@ -37,14 +38,16 @@ class EditPage extends EditRecord
         foreach ($blocks as $key => $value) {
             if (str_ends_with($key, '_upload')) {
                 $urlKey = str_replace('_upload', '', $key);
-                if (!empty($value)) {
+                if (! empty($value)) {
                     $filePath = is_array($value) ? reset($value) : $value;
                     // Strip leading 'public/' if present to avoid double path segments
                     $filePath = preg_replace('#^public/#', '', $filePath);
+                    TransparentImageTrimmer::trimPublicDiskImage($filePath);
                     $fullUrl = Storage::disk('public')->url($filePath);
                     // Store as relative path only
                     $uploadOverrides[$urlKey] = parse_url($fullUrl, PHP_URL_PATH);
                 }
+
                 continue;
             }
 

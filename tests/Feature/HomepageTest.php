@@ -72,10 +72,10 @@ class HomepageTest extends TestCase
         );
     }
 
-    public function test_homepage_renders_play_store_fallback_for_placeholder_url(): void
+    public function test_homepage_renders_play_store_fallback_for_placeholder_urls(): void
     {
         $blocks = Page::defaultContentBlocks();
-        $blocks['hero']['google_play_url'] = '#';
+        $blocks['hero']['google_play_url'] = 'https://example.com/';
 
         Page::create([
             'title' => 'Homepage',

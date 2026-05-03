@@ -31,7 +31,7 @@ return new class extends Migration
 
         $currentUrl = trim((string) ($blocks['hero']['google_play_url'] ?? ''));
 
-        if ($currentUrl !== '' && $currentUrl !== '#') {
+        if (! in_array($currentUrl, ['', '#', 'https://example.com', 'https://example.com/', 'http://example.com', 'http://example.com/'], true)) {
             return;
         }
 
